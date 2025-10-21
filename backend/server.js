@@ -37,9 +37,10 @@ app.use('/api/v1/purchase-orders', require('./routes/purchaseOrders'));
 app.use('/api/v1/bank-reconciliation', require('./routes/bankReconciliation'));
 app.use('/api/v1/cheques', require('./routes/cheques'));
 
-// Phase 1 Continuation: Inventory Reports & Payment Reconciliation
+// Phase 1 Continuation: Inventory Reports, Payment Reconciliation & Enhanced Inventory
 app.use('/api/v1/reports/inventory', require('./routes/inventoryReports'));
 app.use('/api/v1/payment-reconciliation', require('./routes/paymentReconciliation'));
+app.use('/api/v1/inventory-enhanced', require('./routes/enhancedInventory'));
 
 // Health check
 app.get('/health', (req, res) => {
