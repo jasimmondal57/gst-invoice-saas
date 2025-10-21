@@ -1,0 +1,582 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  password  String
+  firstName String?
+  lastName  String?
+  phone     String?
+  avatar    String?
+  role      UserRole   @default(OWNER)
+  status    UserStatus @default(ACTIVE)
+
+  organizations OrganizationMember[]
+  invoices      Invoice[]
+  purchases     Purchase[]
+  auditTrails   AuditTrail[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MANAGER
+  ACCOUNTANT
+  VIEWER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  gstin       String   @unique
+  pan         String?
+  email       String
+  phone       String
+  address     String
+  city        String
+  state       String
+  pincode     String
+  country     String  @default("India")
+  logo        String?
+  website     String?
+  businessType String?
+  invoicePrefix String? @default("INV-")
+  invoiceStartNumber Int? @default(1)
+  invoiceTemplate String? @default("standard")
+  defaultDueDate Int? @default(30)
+  paymentTerms String?
+  bankName    String?
+  bankAccount String?
+  bankIFSC    String?
+  
+  members     OrganizationMember[]
+  invoices    Invoice[]
+  customers   Customer[]
+  suppliers   Supplier[]
+  products    Product[]
+  purchases   Purchase[]
+  inventory   Inventory[]
+  stockMovements StockMovement[]
+  partyGroups PartyGroup[]
+  payments    Payment[]
+  eInvoices   EInvoice[]
+  boms        BOM[]
+  productionOrders ProductionOrder[]
+  customRoles CustomRole[]
+  auditTrails AuditTrail[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([gstin])
+}
+
+model OrganizationMember {
+  id             String   @id @default(cuid())
+  userId         String
+  organizationId String
+  role           UserRole @default(VIEWER)
+  
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+}
+
+model Customer {
+  id             String   @id @default(cuid())
+  organizationId String
+  partyGroupId   String?
+  name           String
+  email          String?
+  phone          String?
+  type           CustomerType @default(B2B)
+  gstin          String?
+  address        String?
+  city           String?
+  state          String?
+  pincode        String?
+  creditLimit    Float    @default(0)
+  outstandingAmount Float @default(0)
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  partyGroup     PartyGroup? @relation(fields: [partyGroupId], references: [id], onDelete: SetNull)
+  invoices       Invoice[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([gstin])
+  @@index([partyGroupId])
+  @@index([type])
+}
+
+enum CustomerType {
+  B2B
+  B2C
+}
+
+model Product {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  hsn            String?
+  sac            String?
+  unit           String   @default("Nos")
+  price          Float
+  gstRate        Float    @default(18)
+  barcode        String?
+  lowStockAlert  Float    @default(10)
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invoiceItems   InvoiceItem[]
+  inventory      Inventory?
+  stockMovements StockMovement[]
+  boms           BOM[]
+  bomItems       BOMItem[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([barcode])
+}
+
+model Inventory {
+  id             String   @id @default(cuid())
+  organizationId String
+  productId      String   @unique
+  quantity       Float    @default(0)
+  reorderLevel   Float    @default(10)
+  reorderQuantity Float   @default(50)
+  lastRestockDate DateTime?
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  product        Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([productId])
+}
+
+model StockMovement {
+  id             String   @id @default(cuid())
+  organizationId String
+  productId      String
+  type           StockMovementType
+  quantity       Float
+  reference      String?
+  notes          String?
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  product        Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([productId])
+  @@index([type])
+}
+
+enum StockMovementType {
+  PURCHASE
+  SALE
+  ADJUSTMENT
+  RETURN
+  DAMAGE
+  OPENING_STOCK
+}
+
+model Invoice {
+  id             String   @id @default(cuid())
+  organizationId String
+  customerId     String
+  userId         String
+  invoiceNumber  String
+  invoiceDate    DateTime
+  dueDate        DateTime?
+  invoiceType    InvoiceType @default(B2B)
+
+  subtotal       Float    @default(0)
+  taxAmount      Float    @default(0)
+  totalAmount    Float    @default(0)
+
+  status         InvoiceStatus @default(DRAFT)
+  notes          String?
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer       Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  user           User @relation(fields: [userId], references: [id])
+  items          InvoiceItem[]
+  eInvoice       EInvoice?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, invoiceNumber])
+  @@index([organizationId])
+  @@index([customerId])
+  @@index([status])
+  @@index([invoiceType])
+}
+
+enum InvoiceType {
+  B2B
+  B2C
+  EXPORT
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  VIEWED
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model InvoiceItem {
+  id        String   @id @default(cuid())
+  invoiceId String
+  productId String?
+  
+  description String
+  quantity    Float
+  unit        String
+  rate        Float
+  gstRate     Float    @default(18)
+  amount      Float
+  
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  product   Product? @relation(fields: [productId], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([invoiceId])
+}
+
+model EInvoice {
+  id             String   @id @default(cuid())
+  organizationId String
+  invoiceId      String   @unique
+  
+  irn            String?  @unique
+  ackNo          String?
+  ackDate        DateTime?
+  qrCode         String?
+  
+  status         EInvoiceStatus @default(PENDING)
+  errorMessage   String?
+  
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invoice        Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([status])
+}
+
+enum EInvoiceStatus {
+  PENDING
+  GENERATED
+  FAILED
+  CANCELLED
+}
+
+model Supplier {
+  id             String   @id @default(cuid())
+  organizationId String
+  partyGroupId   String?
+  name           String
+  email          String?
+  phone          String?
+  type           SupplierType @default(B2B)
+  gstin          String?
+  address        String?
+  city           String?
+  state          String?
+  pincode        String?
+  creditLimit    Float    @default(0)
+  outstandingAmount Float @default(0)
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  partyGroup     PartyGroup? @relation(fields: [partyGroupId], references: [id], onDelete: SetNull)
+  purchases      Purchase[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([gstin])
+  @@index([partyGroupId])
+  @@index([type])
+}
+
+enum SupplierType {
+  B2B
+  B2C
+}
+
+model Purchase {
+  id             String   @id @default(cuid())
+  organizationId String
+  supplierId     String
+  userId         String
+  purchaseNumber String
+  purchaseDate   DateTime
+  purchaseType   String   @default("INVOICE")
+
+  subtotal       Float    @default(0)
+  taxAmount      Float    @default(0)
+  totalAmount    Float    @default(0)
+
+  status         PurchaseStatus @default(DRAFT)
+  notes          String?
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  supplier       Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  user           User @relation(fields: [userId], references: [id])
+  items          PurchaseItem[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, purchaseNumber])
+  @@index([organizationId])
+  @@index([supplierId])
+  @@index([status])
+}
+
+enum PurchaseStatus {
+  DRAFT
+  RECEIVED
+  VERIFIED
+  PAID
+  CANCELLED
+}
+
+model PurchaseItem {
+  id         String   @id @default(cuid())
+  purchaseId String
+
+  description String
+  quantity    Float
+  unit        String
+  rate        Float
+  gstRate     Float    @default(18)
+  amount      Float
+
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([purchaseId])
+}
+
+model PartyGroup {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customers      Customer[]
+  suppliers      Supplier[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+}
+
+model Payment {
+  id             String   @id @default(cuid())
+  organizationId String
+  invoiceId      String?
+  purchaseId     String?
+  customerId     String?
+  supplierId     String?
+
+  amount         Float
+  paymentDate    DateTime
+  paymentMode    PaymentMode
+  referenceNo    String?
+  notes          String?
+  status         PaymentStatus @default(PENDING)
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([invoiceId])
+  @@index([purchaseId])
+  @@index([status])
+}
+
+enum PaymentMode {
+  CASH
+  CHEQUE
+  BANK_TRANSFER
+  CREDIT_CARD
+  DEBIT_CARD
+  UPI
+  WALLET
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model BOM {
+  id             String   @id @default(cuid())
+  organizationId String
+  productId      String
+  name           String
+  description    String?
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  product        Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  items          BOMItem[]
+  productionOrders ProductionOrder[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([productId])
+}
+
+model BOMItem {
+  id        String   @id @default(cuid())
+  bomId     String
+  productId String
+  quantity  Float
+
+  bom       BOM @relation(fields: [bomId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([bomId])
+  @@index([productId])
+}
+
+model ProductionOrder {
+  id             String   @id @default(cuid())
+  organizationId String
+  bomId          String
+  orderNumber    String
+  quantity       Float
+  status         ProductionStatus @default(DRAFT)
+  startDate      DateTime?
+  endDate        DateTime?
+  notes          String?
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  bom            BOM @relation(fields: [bomId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, orderNumber])
+  @@index([organizationId])
+  @@index([status])
+}
+
+enum ProductionStatus {
+  DRAFT
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model CustomRole {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  permissions    String? // JSON string of permission array
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
+model AuditTrail {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  action         String
+  entity         String
+  entityId       String
+  changes        Json?
+  ipAddress      String?
+  userAgent      String?
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([action])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  entity    String
+  entityId  String
+  changes   Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([entity])
+  @@index([entityId])
+}
+
