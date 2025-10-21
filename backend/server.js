@@ -32,6 +32,11 @@ app.use('/api/v1/manufacturing', require('./routes/manufacturing'));
 app.use('/api/v1/users', require('./routes/users'));
 app.use('/api/v1/backup', require('./routes/backup'));
 
+// Phase 1: Purchase Orders, Bank Reconciliation, Cheques
+app.use('/api/v1/purchase-orders', require('./routes/purchaseOrders'));
+app.use('/api/v1/bank-reconciliation', require('./routes/bankReconciliation'));
+app.use('/api/v1/cheques', require('./routes/cheques'));
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
