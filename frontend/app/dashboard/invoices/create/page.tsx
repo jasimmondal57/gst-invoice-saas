@@ -627,27 +627,49 @@ export default function CreateInvoicePage() {
       {/* Product Sidebar Panel */}
       {showProductSidebar && (
         <>
-          {/* Overlay */}
+          {/* Overlay - Light and non-intrusive */}
           <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            className="fixed inset-0 bg-black bg-opacity-20 z-40 backdrop-blur-sm transition-opacity duration-300 ease-out"
             onClick={() => setShowProductSidebar(false)}
+            style={{
+              animation: 'fadeIn 0.3s ease-out',
+            }}
           />
 
           {/* Sidebar */}
-          <div className="fixed right-0 top-0 bottom-0 w-96 bg-white shadow-2xl z-50 flex flex-col">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-6 py-4 flex justify-between items-center">
-              <h2 className="text-xl font-bold">Select Product</h2>
+          <div
+            className="fixed right-0 top-0 bottom-0 w-96 bg-white shadow-2xl z-50 flex flex-col"
+            style={{
+              animation: 'slideInRight 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            }}
+          >
+            {/* Header - Vyapaar Red */}
+            <div
+              className="px-6 py-5 flex justify-between items-center border-b-2"
+              style={{
+                backgroundColor: 'var(--primary)',
+                borderColor: 'var(--primary)',
+              }}
+            >
+              <div>
+                <h2 className="text-xl font-bold" style={{ color: 'var(--white)' }}>
+                  📦 Select Product
+                </h2>
+                <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.8)' }}>
+                  Choose from {products.length} products
+                </p>
+              </div>
               <button
                 onClick={() => setShowProductSidebar(false)}
-                className="text-white hover:bg-indigo-700 rounded-full p-1 text-2xl"
+                className="rounded-full p-2 hover:opacity-80 transition-opacity"
+                style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
               >
-                ✕
+                <span style={{ color: 'var(--white)', fontSize: '24px' }}>✕</span>
               </button>
             </div>
 
-            {/* Create Product Button */}
-            <div className="px-6 py-4 border-b border-gray-200">
+            {/* Create Product Button - Vyapaar Style */}
+            <div className="px-6 py-4 border-b" style={{ borderColor: 'var(--border-gray)' }}>
               <button
                 onClick={() => {
                   setSelectedItemIndex(selectedItemIndex);
@@ -665,37 +687,54 @@ export default function CreateInvoicePage() {
                   setShowProductModal(true);
                   setShowProductSidebar(false);
                 }}
-                className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium flex items-center justify-center gap-2"
+                className="w-full px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg transform hover:scale-105"
+                style={{
+                  backgroundColor: 'var(--primary)',
+                  color: 'var(--white)',
+                }}
               >
                 <span>➕</span> Create New Product
               </button>
             </div>
 
             {/* Search Bar */}
-            <div className="px-6 py-3 border-b border-gray-200">
+            <div className="px-6 py-4 border-b" style={{ borderColor: 'var(--border-gray)' }}>
               <input
                 type="text"
-                placeholder="Search products..."
+                placeholder="🔍 Search products..."
                 value={productSearchTerm[selectedItemIndex || 0] || ''}
                 onChange={(e) => setProductSearchTerm((prev) => ({ ...prev, [selectedItemIndex || 0]: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
+                className="w-full px-4 py-2 rounded-lg border-2 transition-all duration-200 focus:outline-none"
+                style={{
+                  borderColor: 'var(--border-gray)',
+                  color: 'var(--text-dark)',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'var(--primary)';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(237, 26, 59, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'var(--border-gray)';
+                  e.target.style.boxShadow = 'none';
+                }}
               />
             </div>
 
             {/* Products List */}
             <div className="flex-1 overflow-y-auto">
               {products.length === 0 ? (
-                <div className="p-6 text-center text-gray-500">
-                  <p className="text-sm">No products available</p>
-                  <p className="text-xs mt-2">Create a new product to get started</p>
+                <div className="p-8 text-center">
+                  <div className="text-5xl mb-3">📭</div>
+                  <p className="font-medium" style={{ color: 'var(--text-dark)' }}>No products available</p>
+                  <p className="text-sm mt-2" style={{ color: 'var(--text-gray)' }}>Create a new product to get started</p>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-200">
+                <div>
                   {products
                     .filter((p) =>
                       p.name.toLowerCase().includes((productSearchTerm[selectedItemIndex || 0] || '').toLowerCase())
                     )
-                    .map((product) => (
+                    .map((product, idx) => (
                       <button
                         key={product.id}
                         onClick={() => {
@@ -704,22 +743,40 @@ export default function CreateInvoicePage() {
                           }
                           setShowProductSidebar(false);
                         }}
-                        className="w-full text-left px-6 py-4 hover:bg-indigo-50 transition-colors border-b border-gray-100 last:border-b-0"
+                        className="w-full text-left px-6 py-4 border-b transition-all duration-200 hover:pl-8 transform hover:scale-y-105"
+                        style={{
+                          borderColor: 'var(--border-gray)',
+                          backgroundColor: 'transparent',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = 'var(--light-gray)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }}
                       >
-                        <div className="flex justify-between items-start">
+                        <div className="flex justify-between items-start gap-3">
                           <div className="flex-1">
-                            <h3 className="font-semibold text-gray-900">{product.name}</h3>
+                            <h3 className="font-semibold" style={{ color: 'var(--text-dark)' }}>
+                              {product.name}
+                            </h3>
                             {product.description && (
-                              <p className="text-xs text-gray-500 mt-1">{product.description}</p>
+                              <p className="text-xs mt-1" style={{ color: 'var(--text-gray)' }}>
+                                {product.description}
+                              </p>
                             )}
-                            <div className="flex gap-4 mt-2 text-xs text-gray-600">
-                              <span>Unit: {product.unit}</span>
-                              <span>GST: {product.gstRate}%</span>
+                            <div className="flex gap-3 mt-2 text-xs" style={{ color: 'var(--text-gray)' }}>
+                              <span>📦 {product.unit}</span>
+                              <span>🏷️ {product.gstRate}% GST</span>
                             </div>
                           </div>
-                          <div className="text-right ml-4">
-                            <p className="font-bold text-indigo-600">₹{product.price.toFixed(2)}</p>
-                            <p className="text-xs text-gray-500 mt-1">Selling Price</p>
+                          <div className="text-right ml-4 flex-shrink-0">
+                            <p className="font-bold text-lg" style={{ color: 'var(--primary)' }}>
+                              ₹{product.price.toFixed(2)}
+                            </p>
+                            <p className="text-xs mt-1" style={{ color: 'var(--text-gray)' }}>
+                              Price
+                            </p>
                           </div>
                         </div>
                       </button>
@@ -728,6 +785,40 @@ export default function CreateInvoicePage() {
               )}
             </div>
           </div>
+
+          {/* CSS Animations */}
+          <style>{`
+            @keyframes slideInRight {
+              from {
+                transform: translateX(100%);
+                opacity: 0;
+              }
+              to {
+                transform: translateX(0);
+                opacity: 1;
+              }
+            }
+
+            @keyframes fadeIn {
+              from {
+                opacity: 0;
+              }
+              to {
+                opacity: 1;
+              }
+            }
+
+            @keyframes slideOutRight {
+              from {
+                transform: translateX(0);
+                opacity: 1;
+              }
+              to {
+                transform: translateX(100%);
+                opacity: 0;
+              }
+            }
+          `}</style>
         </>
       )}
 
