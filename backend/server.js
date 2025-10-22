@@ -47,6 +47,9 @@ app.use('/api/v1/accounting', require('./routes/accounting'));
 app.use('/api/v1/gst-compliance', require('./routes/gstCompliance'));
 app.use('/api/v1/multi-user', require('./routes/multiUserManagement'));
 
+// Advanced Features: Reports
+app.use('/api/v1/advanced-reports', require('./routes/advancedReports'));
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
