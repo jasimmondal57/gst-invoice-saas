@@ -29,17 +29,18 @@ export default function InvoicesPage() {
 
   useEffect(() => {
     const authToken = localStorage.getItem('token');
+    const orgId = localStorage.getItem('organizationId');
     if (!authToken) {
       router.push('/login');
       return;
     }
     setToken(authToken);
-    fetchInvoices(authToken);
+    fetchInvoices(authToken, orgId || '');
   }, [router]);
 
-  const fetchInvoices = async (authToken: string) => {
+  const fetchInvoices = async (authToken: string, orgId: string) => {
     try {
-      const response = await fetch('http://localhost:5000/api/v1/invoices', {
+      const response = await fetch(`http://localhost:5000/api/v1/invoices?organizationId=${orgId}`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
         },

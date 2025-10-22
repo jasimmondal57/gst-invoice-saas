@@ -41,17 +41,18 @@ export default function ProductsPage() {
 
   useEffect(() => {
     const authToken = localStorage.getItem('token');
+    const orgId = localStorage.getItem('organizationId');
     if (!authToken) {
       router.push('/login');
       return;
     }
     setToken(authToken);
-    fetchProducts(authToken);
+    fetchProducts(authToken, orgId || '');
   }, [router]);
 
-  const fetchProducts = async (authToken: string) => {
+  const fetchProducts = async (authToken: string, orgId: string) => {
     try {
-      const response = await fetch('http://localhost:5000/api/v1/products', {
+      const response = await fetch(`http://localhost:5000/api/v1/products?organizationId=${orgId}`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       if (response.ok) {
@@ -86,20 +87,21 @@ export default function ProductsPage() {
     }
 
     try {
+      const orgId = localStorage.getItem('organizationId') || '';
       const response = await fetch('http://localhost:5000/api/v1/products', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, organizationId: orgId }),
       });
 
       if (response.ok) {
         setSuccess('Product added successfully!');
         setFormData({ name: '', description: '', hsn: '', sac: '', unit: 'Nos', price: '', gstRate: '18', barcode: '', lowStockAlert: '10' });
         setShowForm(false);
-        fetchProducts(token);
+        fetchProducts(token, orgId);
         setTimeout(() => setSuccess(''), 3000);
       }
     } catch (error) {

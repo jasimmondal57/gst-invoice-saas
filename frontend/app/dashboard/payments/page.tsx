@@ -41,17 +41,18 @@ export default function PaymentsPage() {
 
   useEffect(() => {
     const authToken = localStorage.getItem('token');
+    const orgId = localStorage.getItem('organizationId');
     if (!authToken) {
       router.push('/login');
       return;
     }
     setToken(authToken);
-    fetchPayments(authToken);
+    fetchPayments(authToken, orgId || '');
   }, [router]);
 
-  const fetchPayments = async (authToken: string) => {
+  const fetchPayments = async (authToken: string, orgId: string) => {
     try {
-      const response = await fetch('http://localhost:5000/api/v1/payments', {
+      const response = await fetch(`http://localhost:5000/api/v1/payments?organizationId=${orgId}`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       if (response.ok) {

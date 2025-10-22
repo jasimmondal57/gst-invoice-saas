@@ -25,17 +25,18 @@ export default function SuppliersPage() {
 
   useEffect(() => {
     const authToken = localStorage.getItem('token');
+    const orgId = localStorage.getItem('organizationId');
     if (!authToken) {
       router.push('/login');
       return;
     }
     setToken(authToken);
-    fetchSuppliers(authToken);
+    fetchSuppliers(authToken, orgId || '');
   }, [router]);
 
-  const fetchSuppliers = async (authToken: string) => {
+  const fetchSuppliers = async (authToken: string, orgId: string) => {
     try {
-      const response = await fetch('http://localhost:5000/api/v1/suppliers', {
+      const response = await fetch(`http://localhost:5000/api/v1/suppliers?organizationId=${orgId}`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       if (response.ok) {

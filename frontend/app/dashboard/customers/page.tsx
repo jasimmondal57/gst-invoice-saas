@@ -42,17 +42,18 @@ export default function CustomersPage() {
 
   useEffect(() => {
     const authToken = localStorage.getItem('token');
+    const orgId = localStorage.getItem('organizationId');
     if (!authToken) {
       router.push('/login');
       return;
     }
     setToken(authToken);
-    fetchCustomers(authToken);
+    fetchCustomers(authToken, orgId || '');
   }, [router]);
 
-  const fetchCustomers = async (authToken: string) => {
+  const fetchCustomers = async (authToken: string, orgId: string) => {
     try {
-      const response = await fetch('http://localhost:5000/api/v1/customers', {
+      const response = await fetch(`http://localhost:5000/api/v1/customers?organizationId=${orgId}`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       if (response.ok) {
@@ -87,20 +88,21 @@ export default function CustomersPage() {
     }
 
     try {
+      const orgId = localStorage.getItem('organizationId') || '';
       const response = await fetch('http://localhost:5000/api/v1/customers', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, organizationId: orgId }),
       });
 
       if (response.ok) {
         setSuccess('Customer added successfully!');
         setFormData({ name: '', email: '', phone: '', type: 'B2B', gstin: '', address: '', city: '', state: '', pincode: '' });
         setShowForm(false);
-        fetchCustomers(token);
+        fetchCustomers(token, orgId);
         setTimeout(() => setSuccess(''), 3000);
       }
     } catch (error) {

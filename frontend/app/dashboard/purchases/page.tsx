@@ -26,17 +26,18 @@ export default function PurchasesPage() {
 
   useEffect(() => {
     const authToken = localStorage.getItem('token');
+    const orgId = localStorage.getItem('organizationId');
     if (!authToken) {
       router.push('/login');
       return;
     }
     setToken(authToken);
-    fetchPurchases(authToken);
+    fetchPurchases(authToken, orgId || '');
   }, [router]);
 
-  const fetchPurchases = async (authToken: string) => {
+  const fetchPurchases = async (authToken: string, orgId: string) => {
     try {
-      const response = await fetch('http://localhost:5000/api/v1/purchases', {
+      const response = await fetch(`http://localhost:5000/api/v1/purchases?organizationId=${orgId}`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       if (response.ok) {

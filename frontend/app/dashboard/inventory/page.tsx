@@ -25,17 +25,18 @@ export default function InventoryPage() {
 
   useEffect(() => {
     const authToken = localStorage.getItem('token');
+    const orgId = localStorage.getItem('organizationId');
     if (!authToken) {
       router.push('/login');
       return;
     }
     setToken(authToken);
-    fetchInventory(authToken);
+    fetchInventory(authToken, orgId || '');
   }, [router]);
 
-  const fetchInventory = async (authToken: string) => {
+  const fetchInventory = async (authToken: string, orgId: string) => {
     try {
-      const response = await fetch('http://localhost:5000/api/v1/inventory', {
+      const response = await fetch(`http://localhost:5000/api/v1/inventory?organizationId=${orgId}`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       if (response.ok) {
