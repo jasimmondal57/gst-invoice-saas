@@ -5,14 +5,20 @@ import { useRouter } from 'next/navigation';
 import { VyapaarPage } from '@/components/VyapaarPageTemplate';
 import { PrimaryButton, Card, CardHeader, StatusBadge } from '@/components/VyapaarComponents';
 
+interface Product {
+  id: string;
+  name: string;
+  unit: string;
+}
+
 interface InventoryItem {
   id: string;
   productId: string;
-  productName: string;
   quantity: number;
-  unit: string;
-  reorderPoint: number;
-  lastUpdated: string;
+  reorderLevel: number;
+  product?: Product;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export default function InventoryPage() {
@@ -52,12 +58,12 @@ export default function InventoryPage() {
 
   const getStockStatus = (item: InventoryItem) => {
     if (item.quantity === 0) return 'OUT_OF_STOCK';
-    if (item.quantity <= item.reorderPoint) return 'LOW_STOCK';
+    if (item.quantity <= item.reorderLevel) return 'LOW_STOCK';
     return 'IN_STOCK';
   };
 
   const filteredInventory = inventory.filter(item => {
-    const matchesSearch = (item.productName || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (item.product?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
     const status = getStockStatus(item);
     const matchesStatus = filterStatus === 'ALL' || status === filterStatus;
     return matchesSearch && matchesStatus;
@@ -145,10 +151,10 @@ export default function InventoryPage() {
               <tbody>
                 {filteredInventory.map((item) => (
                   <tr key={item.id} className="border-b hover:bg-gray-50" style={{ borderColor: 'var(--border-gray)' }}>
-                    <td className="px-4 py-3 text-sm font-medium" style={{ color: 'var(--text-dark)' }}>{item.productName}</td>
+                    <td className="px-4 py-3 text-sm font-medium" style={{ color: 'var(--text-dark)' }}>{item.product?.name || 'N/A'}</td>
                     <td className="px-4 py-3 text-sm font-semibold" style={{ color: 'var(--text-dark)' }}>{item.quantity}</td>
-                    <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-gray)' }}>{item.unit}</td>
-                    <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-gray)' }}>{item.reorderPoint}</td>
+                    <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-gray)' }}>{item.product?.unit || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-gray)' }}>{item.reorderLevel}</td>
                     <td className="px-4 py-3 text-sm"><StatusBadge status={getStockStatus(item)} /></td>
                   </tr>
                 ))}
