@@ -120,9 +120,11 @@ export const StatusBadge = ({ status }: { status: string }) => {
     }
   };
   const style = getStatusStyle(status);
+  // Display DRAFT as UNPAID for better UX
+  const displayStatus = status.toUpperCase() === 'DRAFT' ? 'UNPAID' : status;
   return (
     <span className="text-xs px-3 py-1 rounded-full inline-block" style={{ backgroundColor: style.bg, color: style.text }}>
-      {status}
+      {displayStatus}
     </span>
   );
 };

@@ -86,7 +86,10 @@ export default function InvoicesPage() {
 
         {/* Filter Tabs */}
         <div className="flex gap-2 mb-6">
-          {['ALL', 'PAID', 'PENDING', 'OVERDUE', 'DRAFT'].map((status) => (
+          {['ALL', 'DRAFT', 'PAID', 'SENT', 'OVERDUE'].map((status) => {
+            // Display DRAFT as UNPAID in UI
+            const displayStatus = status === 'DRAFT' ? 'UNPAID' : status;
+            return (
             <button
               key={status}
               onClick={() => setFilterStatus(status)}
@@ -99,9 +102,10 @@ export default function InvoicesPage() {
                 borderColor: filterStatus === status ? 'var(--primary)' : 'var(--border-gray)',
               }}
             >
-              {status}
+              {displayStatus}
             </button>
-          ))}
+            );
+          })}
         </div>
 
         {/* Content */}

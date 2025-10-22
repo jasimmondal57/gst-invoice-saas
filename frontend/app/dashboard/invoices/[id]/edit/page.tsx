@@ -188,7 +188,7 @@ export default function EditInvoicePage() {
               onChange={(e) => handleStatusChange(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900"
             >
-              <option value="DRAFT">Draft</option>
+              <option value="DRAFT">Unpaid</option>
               <option value="SENT">Sent</option>
               <option value="PAID">Paid</option>
               <option value="OVERDUE">Overdue</option>
