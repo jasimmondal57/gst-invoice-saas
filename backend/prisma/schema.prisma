@@ -92,6 +92,9 @@ model Organization {
   journalEntries JournalEntry[]
   ledgerEntries LedgerEntry[]
   trialBalances TrialBalance[]
+  gstr1Reports GSTR1Report[]
+  gstr2Reports GSTR2Report[]
+  gstr3bReports GSTR3BReport[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -858,5 +861,121 @@ model TrialBalance {
   @@unique([organizationId, asOfDate, accountId])
   @@index([organizationId])
   @@index([asOfDate])
+}
+
+// Phase 2: GST Compliance Module
+model GSTR1Report {
+  id             String   @id @default(cuid())
+  organizationId String
+  month          Int
+  year           Int
+  status         GSTRStatus @default(DRAFT)
+
+  // B2B Supplies
+  b2bSupplies    Float    @default(0)
+  b2bTaxableValue Float   @default(0)
+  b2bIGST        Float    @default(0)
+  b2bCGST        Float    @default(0)
+  b2bSGST        Float    @default(0)
+
+  // B2C Supplies
+  b2cSupplies    Float    @default(0)
+  b2cTaxableValue Float   @default(0)
+  b2cIGST        Float    @default(0)
+  b2cCGST        Float    @default(0)
+  b2cSGST        Float    @default(0)
+
+  // Exports
+  exports        Float    @default(0)
+  exportValue    Float    @default(0)
+
+  totalTaxableValue Float @default(0)
+  totalTax       Float    @default(0)
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, month, year])
+  @@index([organizationId])
+}
+
+model GSTR2Report {
+  id             String   @id @default(cuid())
+  organizationId String
+  month          Int
+  year           Int
+  status         GSTRStatus @default(DRAFT)
+
+  // B2B Purchases
+  b2bPurchases   Float    @default(0)
+  b2bTaxableValue Float   @default(0)
+  b2bIGST        Float    @default(0)
+  b2bCGST        Float    @default(0)
+  b2bSGST        Float    @default(0)
+
+  // Imports
+  imports        Float    @default(0)
+  importValue    Float    @default(0)
+  importIGST     Float    @default(0)
+
+  // Credit Notes
+  creditNotes    Float    @default(0)
+  creditValue    Float    @default(0)
+
+  totalTaxableValue Float @default(0)
+  totalTax       Float    @default(0)
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, month, year])
+  @@index([organizationId])
+}
+
+model GSTR3BReport {
+  id             String   @id @default(cuid())
+  organizationId String
+  month          Int
+  year           Int
+  status         GSTRStatus @default(DRAFT)
+
+  // Outward Supplies
+  outwardSupplies Float  @default(0)
+  outwardTax     Float    @default(0)
+
+  // Inward Supplies
+  inwardSupplies Float   @default(0)
+  inwardTax      Float    @default(0)
+
+  // ITC Available
+  itcAvailable   Float    @default(0)
+
+  // Tax Payable
+  taxPayable     Float    @default(0)
+
+  // Interest & Penalty
+  interest       Float    @default(0)
+  penalty        Float    @default(0)
+
+  totalPayable   Float    @default(0)
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, month, year])
+  @@index([organizationId])
+}
+
+enum GSTRStatus {
+  DRAFT
+  SUBMITTED
+  ACCEPTED
+  REJECTED
 }
 
