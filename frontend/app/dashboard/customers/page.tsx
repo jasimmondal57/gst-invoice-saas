@@ -273,7 +273,14 @@ export default function CustomersPage() {
                   { value: 'B2C', label: 'B2C (Consumer)' },
                 ]}
                 value={formData.type}
-                onChange={(e: any) => setFormData({ ...formData, type: e.target.value })}
+                onChange={(e: any) => {
+                  const newType = e.target.value as 'B2B' | 'B2C';
+                  setFormData({ ...formData, type: newType, gstin: newType === 'B2C' ? '' : formData.gstin });
+                  // Clear GSTIN error when switching to B2C
+                  if (newType === 'B2C' && errors.gstin) {
+                    setErrors({ ...errors, gstin: '' });
+                  }
+                }}
                 required
               />
             </div>
