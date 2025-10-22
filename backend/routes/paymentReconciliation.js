@@ -164,7 +164,7 @@ router.get('/outstanding/summary', authMiddleware, async (req, res) => {
     let totalOutstanding = 0;
     let overdueAmount = 0;
     let upcomingAmount = 0;
-    const outstandingByCustomer: { [key: string]: number } = {};
+    const outstandingByCustomer = {};
 
     const today = new Date();
 
@@ -258,7 +258,7 @@ router.get('/history', authMiddleware, async (req, res) => {
     const { organizationId } = req.body;
     const { invoiceId, customerId } = req.query;
 
-    const where: any = { organizationId };
+    const where = { organizationId };
     if (invoiceId) where.invoiceId = invoiceId;
     if (customerId) where.customerId = customerId;
 

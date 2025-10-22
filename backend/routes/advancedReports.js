@@ -13,11 +13,11 @@ router.get('/sales/summary', authMiddleware, async (req, res) => {
     const { organizationId } = req.body;
     const { startDate, endDate } = req.query;
 
-    const where: any = { organizationId };
+    const where = { organizationId };
     if (startDate && endDate) {
       where.invoiceDate = {
-        gte: new Date(startDate as string),
-        lte: new Date(endDate as string),
+        gte: new Date(startDate),
+        lte: new Date(endDate),
       };
     }
 
@@ -29,7 +29,7 @@ router.get('/sales/summary', authMiddleware, async (req, res) => {
     let totalSales = 0;
     let totalTax = 0;
     let totalItems = 0;
-    const customerWiseSales: { [key: string]: number } = {};
+    const customerWiseSales = {};
 
     invoices.forEach((inv) => {
       totalSales += inv.subtotal;
@@ -62,7 +62,7 @@ router.get('/sales/customer', authMiddleware, async (req, res) => {
       include: { customer: true },
     });
 
-    const customerSales: { [key: string]: any } = {};
+    const customerSales = {};
 
     invoices.forEach((inv) => {
       if (!customerSales[inv.customer.id]) {
@@ -96,11 +96,11 @@ router.get('/purchase/summary', authMiddleware, async (req, res) => {
     const { organizationId } = req.body;
     const { startDate, endDate } = req.query;
 
-    const where: any = { organizationId };
+    const where = { organizationId };
     if (startDate && endDate) {
       where.purchaseDate = {
-        gte: new Date(startDate as string),
-        lte: new Date(endDate as string),
+        gte: new Date(startDate),
+        lte: new Date(endDate),
       };
     }
 
@@ -112,7 +112,7 @@ router.get('/purchase/summary', authMiddleware, async (req, res) => {
     let totalPurchases = 0;
     let totalTax = 0;
     let totalItems = 0;
-    const supplierWisePurchases: { [key: string]: number } = {};
+    const supplierWisePurchases = {};
 
     purchases.forEach((pur) => {
       totalPurchases += pur.subtotal;
@@ -143,17 +143,17 @@ router.get('/profit-loss', authMiddleware, async (req, res) => {
     const { organizationId } = req.body;
     const { startDate, endDate } = req.query;
 
-    const invoiceWhere: any = { organizationId };
-    const purchaseWhere: any = { organizationId };
+    const invoiceWhere = { organizationId };
+    const purchaseWhere = { organizationId };
 
     if (startDate && endDate) {
       invoiceWhere.invoiceDate = {
-        gte: new Date(startDate as string),
-        lte: new Date(endDate as string),
+        gte: new Date(startDate),
+        lte: new Date(endDate),
       };
       purchaseWhere.purchaseDate = {
-        gte: new Date(startDate as string),
-        lte: new Date(endDate as string),
+        gte: new Date(startDate),
+        lte: new Date(endDate),
       };
     }
 
@@ -199,7 +199,7 @@ router.get('/inventory/top-products', authMiddleware, async (req, res) => {
       include: { product: true },
     });
 
-    const productSales: { [key: string]: any } = {};
+    const productSales = {};
 
     items.forEach((item) => {
       if (!productSales[item.product.id]) {
@@ -215,8 +215,8 @@ router.get('/inventory/top-products', authMiddleware, async (req, res) => {
     });
 
     const topProducts = Object.values(productSales)
-      .sort((a: any, b: any) => b.totalRevenue - a.totalRevenue)
-      .slice(0, parseInt(limit as string));
+      .sort((a, b) => b.totalRevenue - a.totalRevenue)
+      .slice(0, parseInt(limit));
 
     res.json(topProducts);
   } catch (error) {
@@ -233,14 +233,14 @@ router.post('/custom', authMiddleware, async (req, res) => {
     const { organizationId } = req.body;
     const { reportType, filters } = req.body;
 
-    let data: any = {};
+    let data = {};
 
     switch (reportType) {
       case 'SALES_BY_MONTH':
         const invoices = await prisma.invoice.findMany({
           where: { organizationId },
         });
-        const monthlyData: { [key: string]: number } = {};
+        const monthlyData = {};
         invoices.forEach((inv) => {
           const month = new Date(inv.invoiceDate).toLocaleString('default', { month: 'long', year: 'numeric' });
           monthlyData[month] = (monthlyData[month] || 0) + inv.totalAmount;

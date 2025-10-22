@@ -38,7 +38,7 @@ router.get('/accounts', authMiddleware, async (req, res) => {
     const { organizationId } = req.body;
     const { type } = req.query;
 
-    const where: any = { organizationId };
+    const where = { organizationId };
     if (type) where.type = type;
 
     const accounts = await prisma.chartOfAccounts.findMany({
@@ -128,7 +128,7 @@ router.post('/journal-entries', authMiddleware, async (req, res) => {
     let totalDebit = 0;
     let totalCredit = 0;
 
-    lines.forEach((line: any) => {
+    lines.forEach((line) => {
       totalDebit += line.debit || 0;
       totalCredit += line.credit || 0;
     });
@@ -147,7 +147,7 @@ router.post('/journal-entries', authMiddleware, async (req, res) => {
         totalDebit,
         totalCredit,
         lines: {
-          create: lines.map((line: any) => ({
+          create: lines.map((line) => ({
             accountId: line.accountId,
             description: line.description,
             debit: line.debit || 0,
@@ -171,7 +171,7 @@ router.get('/journal-entries', authMiddleware, async (req, res) => {
     const { organizationId } = req.body;
     const { status } = req.query;
 
-    const where: any = { organizationId };
+    const where = { organizationId };
     if (status) where.status = status;
 
     const entries = await prisma.journalEntry.findMany({

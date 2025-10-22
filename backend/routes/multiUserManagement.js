@@ -263,7 +263,7 @@ router.get('/audit-trail', authMiddleware, async (req, res) => {
     const { organizationId } = req.body;
     const { action, entity, limit = 100 } = req.query;
 
-    const where: any = { organizationId };
+    const where = { organizationId };
     if (action) where.action = action;
     if (entity) where.entity = entity;
 
@@ -271,7 +271,7 @@ router.get('/audit-trail', authMiddleware, async (req, res) => {
       where,
       include: { user: true },
       orderBy: { createdAt: 'desc' },
-      take: parseInt(limit as string),
+      take: parseInt(limit),
     });
 
     res.json(trails);
@@ -291,7 +291,7 @@ router.get('/audit-trail/user/:userId', authMiddleware, async (req, res) => {
     const trails = await prisma.auditTrail.findMany({
       where: { organizationId, userId },
       orderBy: { createdAt: 'desc' },
-      take: parseInt(limit as string),
+      take: parseInt(limit),
     });
 
     res.json(trails);
