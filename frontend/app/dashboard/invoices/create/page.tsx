@@ -629,9 +629,11 @@ export default function CreateInvoicePage() {
         <>
           {/* Overlay - Light and non-intrusive */}
           <div
-            className="fixed inset-0 bg-black bg-opacity-20 z-40 backdrop-blur-sm transition-opacity duration-300 ease-out"
+            className="fixed inset-0 z-40 transition-opacity duration-300 ease-out"
             onClick={() => setShowProductSidebar(false)}
             style={{
+              backgroundColor: 'rgba(0, 0, 0, 0.15)',
+              backdropFilter: 'blur(4px)',
               animation: 'fadeIn 0.3s ease-out',
             }}
           />
