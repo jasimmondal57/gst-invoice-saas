@@ -187,7 +187,7 @@ export default function DashboardLayout({
                 const categories = Array.from(new Set(navigationItems.map(item => item.category)));
                 return categories.map((category) => (
                   <div key={category}>
-                    <h3 className="text-xs font-bold uppercase px-4 py-2 mb-2" style={{ color: 'var(--text-light)' }}>
+                    <h3 className="text-xs font-bold uppercase px-4 py-2 mb-2 tracking-wider" style={{ color: '#CCCCCC', letterSpacing: '0.5px' }}>
                       {category}
                     </h3>
                     <div className="space-y-1">
@@ -202,9 +202,9 @@ export default function DashboardLayout({
                               className={`flex items-center gap-3 px-4 py-2 rounded-lg transition font-medium text-sm ${
                                 isActive
                                   ? 'text-white'
-                                  : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                                  : 'text-gray-200 hover:text-white hover:bg-gray-700'
                               }`}
-                              style={isActive ? { backgroundColor: 'var(--primary)', borderLeft: '4px solid var(--primary)' } : {}}
+                              style={isActive ? { backgroundColor: 'var(--primary)', borderLeft: '4px solid var(--primary)' } : { color: '#E0E0E0' }}
                             >
                               <span className="text-lg">{item.icon}</span>
                               <span>{item.label}</span>

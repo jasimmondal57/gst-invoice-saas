@@ -68,6 +68,7 @@ export const FormInput = ({ label, placeholder, type = 'text', value, onChange, 
       style={{
         borderColor: error ? 'var(--error)' : 'var(--border-gray)',
         focusRing: 'var(--primary)',
+        color: 'var(--text-dark)',
       }}
     />
     {error && <p className="text-xs mt-1" style={{ color: 'var(--error)' }}>{error}</p>}
@@ -84,11 +85,15 @@ export const FormSelect = ({ label, options, value, onChange, error, required = 
       value={value}
       onChange={onChange}
       className="w-full px-4 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2"
-      style={{ borderColor: error ? 'var(--error)' : 'var(--border-gray)' }}
+      style={{
+        borderColor: error ? 'var(--error)' : 'var(--border-gray)',
+        color: 'var(--text-dark)',
+        backgroundColor: 'var(--white)',
+      }}
     >
-      <option value="">Select {label}</option>
+      <option value="" style={{ color: 'var(--text-gray)' }}>Select {label}</option>
       {options.map((opt: any) => (
-        <option key={opt.value} value={opt.value}>{opt.label}</option>
+        <option key={opt.value} value={opt.value} style={{ color: 'var(--text-dark)' }}>{opt.label}</option>
       ))}
     </select>
     {error && <p className="text-xs mt-1" style={{ color: 'var(--error)' }}>{error}</p>}
@@ -204,7 +209,7 @@ export const Modal = ({ isOpen, title, children, onClose, actions }: any) => {
       <Card className="w-full max-w-md">
         <div className="flex justify-between items-center mb-4 pb-4 border-b" style={{ borderColor: 'var(--border-gray)' }}>
           <h2 className="text-lg font-bold" style={{ color: 'var(--text-dark)' }}>{title}</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
+          <button onClick={onClose} className="text-lg font-bold" style={{ color: 'var(--text-gray)', cursor: 'pointer' }}>✕</button>
         </div>
         <div className="mb-4">{children}</div>
         <div className="flex gap-2 justify-end">
