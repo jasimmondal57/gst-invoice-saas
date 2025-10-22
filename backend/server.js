@@ -42,9 +42,10 @@ app.use('/api/v1/reports/inventory', require('./routes/inventoryReports'));
 app.use('/api/v1/payment-reconciliation', require('./routes/paymentReconciliation'));
 app.use('/api/v1/inventory-enhanced', require('./routes/enhancedInventory'));
 
-// Phase 2: Accounting Module & GST Compliance
+// Phase 2: Accounting Module, GST Compliance & Multi-User Management
 app.use('/api/v1/accounting', require('./routes/accounting'));
 app.use('/api/v1/gst-compliance', require('./routes/gstCompliance'));
+app.use('/api/v1/multi-user', require('./routes/multiUserManagement'));
 
 // Health check
 app.get('/health', (req, res) => {
