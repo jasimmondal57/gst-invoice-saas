@@ -204,10 +204,14 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // Update invoice
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
-    const { invoiceDate, status, items } = req.body;
+    const { invoiceDate, dueDate, status, items, customerId, subtotal, taxAmount, totalAmount, notes } = req.body;
 
     // Build update data - only include fields that should be updated
     const updateData = {};
+
+    if (customerId) {
+      updateData.customerId = customerId;
+    }
 
     if (status) {
       updateData.status = status;
@@ -216,6 +220,26 @@ router.put('/:id', authMiddleware, async (req, res) => {
     if (invoiceDate) {
       // Convert date string to ISO-8601 DateTime
       updateData.invoiceDate = new Date(invoiceDate);
+    }
+
+    if (dueDate) {
+      updateData.dueDate = new Date(dueDate);
+    }
+
+    if (subtotal !== undefined) {
+      updateData.subtotal = subtotal;
+    }
+
+    if (taxAmount !== undefined) {
+      updateData.taxAmount = taxAmount;
+    }
+
+    if (totalAmount !== undefined) {
+      updateData.totalAmount = totalAmount;
+    }
+
+    if (notes !== undefined) {
+      updateData.notes = notes;
     }
 
     // Update invoice
