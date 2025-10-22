@@ -15,6 +15,9 @@ interface InvoiceItem {
   gstAmount: number;
   discount: number;
   discountType: 'PERCENTAGE' | 'FIXED';
+  gstType?: 'IGST' | 'SGST_CGST'; // IGST for interstate, SGST_CGST for intrastate
+  sgstAmount?: number;
+  cgstAmount?: number;
 }
 
 interface Customer {
@@ -217,19 +220,56 @@ export default function CreateInvoicePage() {
   };
   const calculateGST = (amount: number, gstRate: number) => (amount * gstRate) / 100;
 
+  // Determine GST type based on supplier and customer states
+  // IGST: Interstate (different states)
+  // SGST+CGST: Intrastate (same state)
+  const determineGSTType = (supplierState: string, customerState: string): 'IGST' | 'SGST_CGST' => {
+    if (!supplierState || !customerState) return 'SGST_CGST'; // Default to intrastate
+    return supplierState.toLowerCase().trim() === customerState.toLowerCase().trim() ? 'SGST_CGST' : 'IGST';
+  };
+
+  // Calculate GST amounts based on type
+  const calculateGSTAmounts = (amount: number, gstRate: number, gstType: 'IGST' | 'SGST_CGST') => {
+    const totalGST = (amount * gstRate) / 100;
+    if (gstType === 'IGST') {
+      return { gstAmount: totalGST, sgstAmount: 0, cgstAmount: 0 };
+    } else {
+      // For SGST+CGST, split equally
+      const halfGST = totalGST / 2;
+      return { gstAmount: totalGST, sgstAmount: halfGST, cgstAmount: halfGST };
+    }
+  };
+
   const handleCustomerSelect = (customer: Customer) => {
-    setFormData((prev) => ({
-      ...prev,
-      customerType: customer.type,
-      customerGSTIN: customer.gstin || '',
-      customerName: customer.name,
-      customerAddress: customer.address || '',
-      customerCity: customer.city || '',
-      customerState: customer.state || '',
-      customerPincode: customer.pincode || '',
-      customerEmail: customer.email || '',
-      customerPhone: customer.phone || '',
-    }));
+    setFormData((prev) => {
+      const gstType = determineGSTType(prev.supplierState, customer.state || '');
+
+      // Update GST type for all items
+      const updatedItems = prev.items.map((item) => {
+        const gstAmounts = calculateGSTAmounts(item.amount, item.gstRate, gstType);
+        return {
+          ...item,
+          gstType,
+          gstAmount: gstAmounts.gstAmount,
+          sgstAmount: gstAmounts.sgstAmount,
+          cgstAmount: gstAmounts.cgstAmount,
+        };
+      });
+
+      return {
+        ...prev,
+        customerType: customer.type,
+        customerGSTIN: customer.gstin || '',
+        customerName: customer.name,
+        customerAddress: customer.address || '',
+        customerCity: customer.city || '',
+        customerState: customer.state || '',
+        customerPincode: customer.pincode || '',
+        customerEmail: customer.email || '',
+        customerPhone: customer.phone || '',
+        items: updatedItems,
+      };
+    });
     setShowCustomerSidebar(false);
   };
 
@@ -294,9 +334,17 @@ export default function CreateInvoicePage() {
     const baseAmount = newItems[index].quantity * newItems[index].rate;
     const discountAmount = calculateDiscount(baseAmount, newItems[index].discount, newItems[index].discountType);
     const amountAfterDiscount = baseAmount - discountAmount;
-    const gstAmount = calculateGST(amountAfterDiscount, newItems[index].gstRate);
+
+    // Determine GST type and calculate amounts
+    const gstType = determineGSTType(formData.supplierState, formData.customerState);
+    const gstAmounts = calculateGSTAmounts(amountAfterDiscount, newItems[index].gstRate, gstType);
+
     newItems[index].amount = amountAfterDiscount;
-    newItems[index].gstAmount = gstAmount;
+    newItems[index].gstAmount = gstAmounts.gstAmount;
+    newItems[index].sgstAmount = gstAmounts.sgstAmount;
+    newItems[index].cgstAmount = gstAmounts.cgstAmount;
+    newItems[index].gstType = gstType;
+
     setFormData((prev) => ({ ...prev, items: newItems }));
     setShowProductDropdown((prev) => ({ ...prev, [index]: false }));
     setProductSearchTerm((prev) => ({ ...prev, [index]: '' }));
@@ -364,13 +412,20 @@ export default function CreateInvoicePage() {
     const newItems = [...formData.items];
     newItems[index] = { ...newItems[index], [field]: value };
 
-    if (field === 'quantity' || field === 'rate' || field === 'discount' || field === 'discountType') {
+    if (field === 'quantity' || field === 'rate' || field === 'discount' || field === 'discountType' || field === 'gstRate') {
       const baseAmount = calculateAmount(newItems[index].quantity, newItems[index].rate);
       const discountAmount = calculateDiscount(baseAmount, newItems[index].discount, newItems[index].discountType);
       const amountAfterDiscount = baseAmount - discountAmount;
-      const gstAmount = calculateGST(amountAfterDiscount, newItems[index].gstRate);
+
+      // Recalculate GST with current GST type
+      const gstType = newItems[index].gstType || determineGSTType(formData.supplierState, formData.customerState);
+      const gstAmounts = calculateGSTAmounts(amountAfterDiscount, newItems[index].gstRate, gstType);
+
       newItems[index].amount = amountAfterDiscount;
-      newItems[index].gstAmount = gstAmount;
+      newItems[index].gstAmount = gstAmounts.gstAmount;
+      newItems[index].sgstAmount = gstAmounts.sgstAmount;
+      newItems[index].cgstAmount = gstAmounts.cgstAmount;
+      newItems[index].gstType = gstType;
     }
 
     setFormData((prev) => ({ ...prev, items: newItems }));
@@ -1161,10 +1216,11 @@ export default function CreateInvoicePage() {
                                 📧 {customer.email}
                               </p>
                             )}
-                            <div className="flex gap-3 mt-2 text-xs" style={{ color: 'var(--text-gray)' }}>
+                            <div className="flex gap-3 mt-2 text-xs flex-wrap" style={{ color: 'var(--text-gray)' }}>
                               <span className={`px-2 py-1 rounded ${customer.type === 'B2B' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
                                 {customer.type}
                               </span>
+                              {customer.state && <span>📍 {customer.state}</span>}
                               {customer.phone && <span>📱 {customer.phone}</span>}
                             </div>
                           </div>
