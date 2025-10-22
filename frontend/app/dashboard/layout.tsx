@@ -12,14 +12,51 @@ interface User {
 }
 
 const navigationItems = [
-  { label: 'Dashboard', href: '/dashboard', icon: '📊' },
-  { label: 'Invoices', href: '/dashboard/invoices', icon: '📄' },
-  { label: 'Customers', href: '/dashboard/customers', icon: '👥' },
-  { label: 'Products', href: '/dashboard/products', icon: '📦' },
-  { label: 'Inventory', href: '/dashboard/inventory', icon: '📦' },
-  { label: 'Payments', href: '/dashboard/payments', icon: '💳' },
-  { label: 'Reports', href: '/dashboard/reports', icon: '📈' },
-  { label: 'Settings', href: '/dashboard/settings', icon: '⚙️' },
+  // Core
+  { label: 'Dashboard', href: '/dashboard', icon: '📊', category: 'Core' },
+  { label: 'Invoices', href: '/dashboard/invoices', icon: '📄', category: 'Core' },
+  { label: 'Customers', href: '/dashboard/customers', icon: '👥', category: 'Core' },
+  { label: 'Products', href: '/dashboard/products', icon: '📦', category: 'Core' },
+
+  // Inventory & Stock
+  { label: 'Inventory', href: '/dashboard/inventory', icon: '📦', category: 'Inventory' },
+  { label: 'Inventory Enhanced', href: '/dashboard/inventory-enhanced', icon: '📊', category: 'Inventory' },
+
+  // Purchases & Suppliers
+  { label: 'Purchases', href: '/dashboard/purchases', icon: '🛒', category: 'Purchases' },
+  { label: 'Purchase Orders', href: '/dashboard/purchase-orders', icon: '📋', category: 'Purchases' },
+  { label: 'Suppliers', href: '/dashboard/suppliers', icon: '🏢', category: 'Purchases' },
+
+  // Payments & Financial
+  { label: 'Payments', href: '/dashboard/payments', icon: '💳', category: 'Financial' },
+  { label: 'Payment Reconciliation', href: '/dashboard/payment-reconciliation', icon: '✓', category: 'Financial' },
+  { label: 'Expenses', href: '/dashboard/expenses', icon: '💸', category: 'Financial' },
+
+  // Reports & Analytics
+  { label: 'Reports', href: '/dashboard/reports', icon: '📈', category: 'Reports' },
+  { label: 'Advanced Reports', href: '/dashboard/advanced-reports', icon: '📊', category: 'Reports' },
+
+  // GST & Compliance
+  { label: 'GST Compliance', href: '/dashboard/gst-compliance', icon: '📋', category: 'Compliance' },
+  { label: 'E-Invoices', href: '/dashboard/e-invoices', icon: '📧', category: 'Compliance' },
+
+  // Accounting
+  { label: 'Accounting', href: '/dashboard/accounting', icon: '💰', category: 'Accounting' },
+
+  // Bank & Cheque
+  { label: 'Bank Reconciliation', href: '/dashboard/bank-reconciliation', icon: '🏦', category: 'Banking' },
+  { label: 'Cheque Management', href: '/dashboard/cheque-management', icon: '✓', category: 'Banking' },
+
+  // Multi-User & Management
+  { label: 'Multi-User', href: '/dashboard/multi-user', icon: '👨‍💼', category: 'Management' },
+  { label: 'Users', href: '/dashboard/users', icon: '👤', category: 'Management' },
+  { label: 'Party Groups', href: '/dashboard/party-groups', icon: '🏷️', category: 'Management' },
+
+  // Other
+  { label: 'Manufacturing', href: '/dashboard/manufacturing', icon: '🏭', category: 'Other' },
+  { label: 'Backup', href: '/dashboard/backup', icon: '💾', category: 'Other' },
+  { label: 'Help', href: '/dashboard/help', icon: '❓', category: 'Other' },
+  { label: 'Settings', href: '/dashboard/settings', icon: '⚙️', category: 'Other' },
 ];
 
 export default function DashboardLayout({
@@ -144,26 +181,40 @@ export default function DashboardLayout({
       <div className="flex">
         {/* Sidebar - Vyapaar Style */}
         {sidebarOpen && (
-          <aside className="w-64 min-h-screen sticky top-20 border-r transition-all duration-300" style={{ backgroundColor: 'var(--dark-bg)', borderColor: 'var(--border-gray)' }}>
-            <nav className="p-4 space-y-2">
-              {navigationItems.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition font-medium text-sm ${
-                      isActive
-                        ? 'text-white'
-                        : 'text-gray-300 hover:text-white hover:bg-gray-700'
-                    }`}
-                    style={isActive ? { backgroundColor: 'var(--primary)', borderLeft: '4px solid var(--primary)' } : {}}
-                  >
-                    <span className="text-lg">{item.icon}</span>
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
+          <aside className="w-64 min-h-screen sticky top-20 border-r transition-all duration-300 overflow-y-auto" style={{ backgroundColor: 'var(--dark-bg)', borderColor: 'var(--border-gray)' }}>
+            <nav className="p-4 space-y-4">
+              {(() => {
+                const categories = Array.from(new Set(navigationItems.map(item => item.category)));
+                return categories.map((category) => (
+                  <div key={category}>
+                    <h3 className="text-xs font-bold uppercase px-4 py-2 mb-2" style={{ color: 'var(--text-light)' }}>
+                      {category}
+                    </h3>
+                    <div className="space-y-1">
+                      {navigationItems
+                        .filter(item => item.category === category)
+                        .map((item) => {
+                          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                          return (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              className={`flex items-center gap-3 px-4 py-2 rounded-lg transition font-medium text-sm ${
+                                isActive
+                                  ? 'text-white'
+                                  : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                              }`}
+                              style={isActive ? { backgroundColor: 'var(--primary)', borderLeft: '4px solid var(--primary)' } : {}}
+                            >
+                              <span className="text-lg">{item.icon}</span>
+                              <span>{item.label}</span>
+                            </Link>
+                          );
+                        })}
+                    </div>
+                  </div>
+                ));
+              })()}
             </nav>
           </aside>
         )}
