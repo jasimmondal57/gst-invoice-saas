@@ -287,11 +287,6 @@ export default function CreateInvoicePage() {
       alert('Error creating product');
     }
   };
-    newItems[index].gstAmount = gstAmount;
-
-    setFormData((prev) => ({ ...prev, items: newItems }));
-    setShowProductDropdown((prev) => ({ ...prev, [index]: false }));
-  };
 
   const handleItemChange = (index: number, field: string, value: any) => {
     const newItems = [...formData.items];
