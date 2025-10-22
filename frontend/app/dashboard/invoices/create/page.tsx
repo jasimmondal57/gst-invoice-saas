@@ -536,8 +536,8 @@ export default function CreateInvoicePage() {
 
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Items</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="overflow-x-auto overflow-y-visible">
+              <table className="w-full text-sm relative">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     <th className="px-4 py-2 text-left text-gray-700 font-medium">Product / Description</th>
@@ -553,8 +553,8 @@ export default function CreateInvoicePage() {
                 </thead>
                 <tbody>
                   {formData.items.map((item, index) => (
-                    <tr key={item.id} className="border-b border-gray-200 hover:bg-gray-50">
-                      <td className="px-4 py-2 relative">
+                    <tr key={item.id} className="border-b border-gray-200 hover:bg-gray-50 relative">
+                      <td className="px-4 py-2 relative z-10">
                         <input
                           type="text"
                           value={productSearchTerm[index] || item.description}
@@ -567,7 +567,7 @@ export default function CreateInvoicePage() {
                           className="w-full px-2 py-1 border border-gray-300 rounded text-gray-900 placeholder-gray-500"
                         />
                         {showProductDropdown[index] && (
-                          <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded mt-1 max-h-48 overflow-y-auto z-20 shadow-lg">
+                          <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded mt-1 max-h-48 overflow-y-auto z-50 shadow-xl">
                             {/* Filtered products */}
                             {products
                               .filter((p) =>
