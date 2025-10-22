@@ -3,6 +3,47 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+// Indian States List
+const INDIAN_STATES = [
+  'Andaman & Nicobar Islands',
+  'Andhra Pradesh',
+  'Arunachal Pradesh',
+  'Assam',
+  'Bihar',
+  'Chandigarh',
+  'Chhattisgarh',
+  'Dadra & Nagar Haveli',
+  'Daman & Diu',
+  'Delhi',
+  'Goa',
+  'Gujarat',
+  'Haryana',
+  'Himachal Pradesh',
+  'Jammu & Kashmir',
+  'Jharkhand',
+  'Karnataka',
+  'Kerala',
+  'Ladakh',
+  'Lakshadweep',
+  'Madhya Pradesh',
+  'Maharashtra',
+  'Manipur',
+  'Meghalaya',
+  'Mizoram',
+  'Nagaland',
+  'Odisha',
+  'Puducherry',
+  'Punjab',
+  'Rajasthan',
+  'Sikkim',
+  'Tamil Nadu',
+  'Telangana',
+  'Tripura',
+  'Uttar Pradesh',
+  'Uttarakhand',
+  'West Bengal',
+];
+
 interface InvoiceItem {
   id: string;
   description: string;
@@ -119,6 +160,7 @@ export default function CreateInvoicePage() {
     state: '',
     pincode: '',
   });
+  const [customerContextMenu, setCustomerContextMenu] = useState<{ customerId: string; x: number; y: number } | null>(null);
 
   const [formData, setFormData] = useState({
     invoiceNumber: '',
@@ -1192,7 +1234,10 @@ export default function CreateInvoicePage() {
           {/* Overlay */}
           <div
             className="fixed inset-0 z-40 transition-opacity duration-300 ease-out"
-            onClick={() => setShowCustomerSidebar(false)}
+            onClick={() => {
+              setShowCustomerSidebar(false);
+              setCustomerContextMenu(null);
+            }}
             style={{
               backgroundColor: 'rgba(0, 0, 0, 0.15)',
               backdropFilter: 'blur(4px)',
@@ -1336,33 +1381,81 @@ export default function CreateInvoicePage() {
                           </div>
                         </button>
 
-                        {/* Edit Button */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingCustomerId(customer.id);
-                            setEditCustomerForm({
-                              name: customer.name,
-                              type: customer.type,
-                              gstin: customer.gstin || '',
-                              email: customer.email || '',
-                              phone: customer.phone || '',
-                              address: customer.address || '',
-                              city: customer.city || '',
-                              state: customer.state || '',
-                              pincode: customer.pincode || '',
-                            });
-                            setShowEditCustomerModal(true);
-                            setShowCustomerSidebar(false);
-                          }}
-                          className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 opacity-0 group-hover:opacity-100"
-                          style={{
-                            backgroundColor: 'var(--primary)',
-                            color: 'var(--white)',
-                          }}
-                        >
-                          ✏️ Edit
-                        </button>
+                        {/* Context Menu Button */}
+                        <div className="relative">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              setCustomerContextMenu({
+                                customerId: customer.id,
+                                x: rect.right - 150,
+                                y: rect.bottom + 5,
+                              });
+                            }}
+                            className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 opacity-0 group-hover:opacity-100"
+                            style={{
+                              backgroundColor: 'var(--primary)',
+                              color: 'var(--white)',
+                            }}
+                          >
+                            ⋮ Menu
+                          </button>
+
+                          {/* Context Menu Dropdown */}
+                          {customerContextMenu?.customerId === customer.id && (
+                            <div
+                              className="absolute z-50 bg-white rounded-lg shadow-lg border border-gray-200 min-w-max"
+                              style={{
+                                top: `${customerContextMenu.y}px`,
+                                left: `${customerContextMenu.x}px`,
+                              }}
+                            >
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingCustomerId(customer.id);
+                                  setEditCustomerForm({
+                                    name: customer.name,
+                                    type: customer.type,
+                                    gstin: customer.gstin || '',
+                                    email: customer.email || '',
+                                    phone: customer.phone || '',
+                                    address: customer.address || '',
+                                    city: customer.city || '',
+                                    state: customer.state || '',
+                                    pincode: customer.pincode || '',
+                                  });
+                                  setShowEditCustomerModal(true);
+                                  setCustomerContextMenu(null);
+                                }}
+                                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-900 font-medium border-b border-gray-200"
+                              >
+                                ✏️ Edit Details
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCustomerSelect(customer);
+                                  setShowCustomerSidebar(false);
+                                  setCustomerContextMenu(null);
+                                }}
+                                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-900 font-medium border-b border-gray-200"
+                              >
+                                ✓ Select Customer
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCustomerContextMenu(null);
+                                }}
+                                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-600 font-medium"
+                              >
+                                ✕ Close
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ))}
                 </div>
@@ -1493,14 +1586,19 @@ export default function CreateInvoicePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
-                  <input
-                    type="text"
+                  <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
+                  <select
                     value={newCustomerForm.state}
                     onChange={(e) => setNewCustomerForm({ ...newCustomerForm, state: e.target.value })}
-                    placeholder="Enter state"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
-                  />
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                  >
+                    <option value="">Select State</option>
+                    {INDIAN_STATES.map((state) => (
+                      <option key={state} value={state}>
+                        {state}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Pincode</label>
@@ -1631,14 +1729,19 @@ export default function CreateInvoicePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
-                  <input
-                    type="text"
+                  <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
+                  <select
                     value={editCustomerForm.state}
                     onChange={(e) => setEditCustomerForm({ ...editCustomerForm, state: e.target.value })}
-                    placeholder="Enter state"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
-                  />
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                  >
+                    <option value="">Select State</option>
+                    {INDIAN_STATES.map((state) => (
+                      <option key={state} value={state}>
+                        {state}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Pincode</label>
