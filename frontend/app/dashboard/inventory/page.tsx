@@ -56,7 +56,7 @@ export default function InventoryPage() {
   };
 
   const filteredInventory = inventory.filter(item => {
-    const matchesSearch = item.productName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (item.productName || '').toLowerCase().includes(searchTerm.toLowerCase());
     const status = getStockStatus(item);
     const matchesStatus = filterStatus === 'ALL' || status === filterStatus;
     return matchesSearch && matchesStatus;

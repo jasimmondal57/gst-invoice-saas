@@ -50,8 +50,8 @@ export default function SuppliersPage() {
   };
 
   const filteredSuppliers = suppliers.filter(supplier =>
-    supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    supplier.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (supplier.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (supplier.email || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const totalPurchases = suppliers.reduce((sum, s) => sum + s.totalPurchases, 0);

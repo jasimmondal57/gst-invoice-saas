@@ -51,8 +51,8 @@ export default function PurchasesPage() {
   };
 
   const filteredPurchases = purchases.filter(p => {
-    const matchesSearch = p.purchaseNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         p.supplier.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (p.purchaseNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (p.supplier?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'ALL' || p.status === filterStatus;
     return matchesSearch && matchesStatus;
   });

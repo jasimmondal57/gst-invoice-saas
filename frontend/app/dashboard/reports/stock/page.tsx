@@ -62,7 +62,7 @@ export default function StockReportsPage() {
   };
 
   const filteredReports = reports.filter(r => {
-    const matchesSearch = r.productName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (r.productName || '').toLowerCase().includes(searchTerm.toLowerCase());
     let matchesStatus = true;
 
     if (filterStatus === 'LOW_STOCK') {
