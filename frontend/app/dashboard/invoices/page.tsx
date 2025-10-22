@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { PageHeader, PrimaryButton, Card, CardHeader, StatusBadge, EmptyState } from '@/components/VyapaarComponents';
 
 interface Customer {
   id: string;
@@ -24,6 +25,7 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState('');
+  const [filterStatus, setFilterStatus] = useState('ALL');
 
   useEffect(() => {
     const authToken = localStorage.getItem('token');
@@ -54,107 +56,108 @@ export default function InvoicesPage() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'PAID':
-        return 'bg-green-100 text-green-800';
-      case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'OVERDUE':
-        return 'bg-red-100 text-red-800';
-      case 'DRAFT':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-blue-100 text-blue-800';
-    }
-  };
+  const filteredInvoices = filterStatus === 'ALL' ? invoices : invoices.filter(inv => inv.status === filterStatus);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--light-gray)' }}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading invoices...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: 'var(--primary)' }}></div>
+          <p style={{ color: 'var(--text-gray)' }}>Loading invoices...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Invoices</h1>
-              <p className="text-gray-600 mt-1">Manage all your invoices</p>
-            </div>
+    <div className="min-h-screen p-6" style={{ backgroundColor: 'var(--light-gray)' }}>
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <PageHeader
+          title="Invoices"
+          subtitle="Manage all your invoices"
+          action={
             <Link href="/dashboard/invoices/create">
-              <button className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold">
-                + Create Invoice
-              </button>
+              <PrimaryButton>+ Create Invoice</PrimaryButton>
             </Link>
-          </div>
-        </div>
-      </div>
+          }
+        />
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {invoices.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-md p-12 text-center">
-            <div className="text-6xl mb-4">📄</div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">No invoices yet</h3>
-            <p className="text-gray-700 mb-6">Create your first invoice to get started</p>
-            <Link href="/dashboard/invoices/create">
-              <button className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold">
-                Create First Invoice
-              </button>
-            </Link>
-          </div>
+        {/* Filter Tabs */}
+        <div className="flex gap-2 mb-6">
+          {['ALL', 'PAID', 'PENDING', 'OVERDUE', 'DRAFT'].map((status) => (
+            <button
+              key={status}
+              onClick={() => setFilterStatus(status)}
+              className="px-4 py-2 rounded-lg text-sm font-medium transition"
+              style={{
+                backgroundColor: filterStatus === status ? 'var(--primary)' : 'var(--white)',
+                color: filterStatus === status ? 'white' : 'var(--text-gray)',
+                borderColor: filterStatus === status ? 'var(--primary)' : 'var(--border-gray)',
+                border: '1px solid',
+              }}
+            >
+              {status}
+            </button>
+          ))}
+        </div>
+
+        {/* Content */}
+        {filteredInvoices.length === 0 ? (
+          <EmptyState
+            icon="📄"
+            title="No invoices yet"
+            description="Create your first invoice to get started"
+            action={
+              <Link href="/dashboard/invoices/create">
+                <PrimaryButton>Create First Invoice</PrimaryButton>
+              </Link>
+            }
+          />
         ) : (
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-100 border-b">
-                <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Invoice #</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Customer</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Amount</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Date</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoices.map((invoice) => (
-                  <tr key={invoice.id} className="border-b hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm font-medium text-indigo-600">
-                      <Link href={`/dashboard/invoices/${invoice.id}`}>
-                        {invoice.invoiceNumber}
-                      </Link>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{invoice.customer.name}</td>
-                    <td className="px-6 py-4 text-sm font-semibold text-gray-900">
-                      ₹{invoice.totalAmount.toLocaleString('en-IN')}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {new Date(invoice.invoiceDate).toLocaleDateString('en-IN')}
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(invoice.status)}`}>
-                        {invoice.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <Link href={`/dashboard/invoices/${invoice.id}`}>
-                        <button className="text-indigo-600 hover:text-indigo-900 font-medium">View</button>
-                      </Link>
-                    </td>
+          <Card>
+            <CardHeader title={`Invoices (${filteredInvoices.length})`} subtitle="All your invoices in one place" />
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr style={{ backgroundColor: 'var(--light-gray)', borderBottom: '1px solid var(--border-gray)' }}>
+                    <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: 'var(--text-dark)' }}>Invoice #</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: 'var(--text-dark)' }}>Customer</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: 'var(--text-dark)' }}>Amount</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: 'var(--text-dark)' }}>Date</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: 'var(--text-dark)' }}>Status</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: 'var(--text-dark)' }}>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filteredInvoices.map((invoice) => (
+                    <tr key={invoice.id} className="border-b hover:bg-gray-50" style={{ borderColor: 'var(--border-gray)' }}>
+                      <td className="px-4 py-3 text-sm font-medium" style={{ color: 'var(--primary)' }}>
+                        <Link href={`/dashboard/invoices/${invoice.id}`}>
+                          {invoice.invoiceNumber}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-dark)' }}>{invoice.customer.name}</td>
+                      <td className="px-4 py-3 text-sm font-semibold" style={{ color: 'var(--text-dark)' }}>
+                        ₹{invoice.totalAmount.toLocaleString('en-IN')}
+                      </td>
+                      <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-gray)' }}>
+                        {new Date(invoice.invoiceDate).toLocaleDateString('en-IN')}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <StatusBadge status={invoice.status} />
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <Link href={`/dashboard/invoices/${invoice.id}`}>
+                          <button className="font-medium transition hover:opacity-80" style={{ color: 'var(--primary)' }}>View</button>
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         )}
       </div>
     </div>
