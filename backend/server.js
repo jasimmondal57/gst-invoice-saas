@@ -42,6 +42,9 @@ app.use('/api/v1/reports/inventory', require('./routes/inventoryReports'));
 app.use('/api/v1/payment-reconciliation', require('./routes/paymentReconciliation'));
 app.use('/api/v1/inventory-enhanced', require('./routes/enhancedInventory'));
 
+// Phase 2: Accounting Module
+app.use('/api/v1/accounting', require('./routes/accounting'));
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });

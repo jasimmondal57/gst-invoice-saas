@@ -88,6 +88,10 @@ model Organization {
   purchaseOrders PurchaseOrder[]
   bankReconciliations BankReconciliation[]
   cheques     Cheque[]
+  chartOfAccounts ChartOfAccounts[]
+  journalEntries JournalEntry[]
+  ledgerEntries LedgerEntry[]
+  trialBalances TrialBalance[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -732,5 +736,127 @@ enum ChequeStatus {
   CLEARED
   BOUNCED
   CANCELLED
+}
+
+// Phase 2: Accounting Module
+model ChartOfAccounts {
+  id             String   @id @default(cuid())
+  organizationId String
+  code           String
+  name           String
+  type           AccountType
+  subType        String?
+  description    String?
+  openingBalance Float    @default(0)
+  status         AccountStatus @default(ACTIVE)
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  journalLines   JournalLine[]
+  ledgerEntries  LedgerEntry[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@index([type])
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+enum AccountStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model JournalEntry {
+  id             String   @id @default(cuid())
+  organizationId String
+  entryNumber    String
+  entryDate      DateTime
+  description    String?
+  referenceNo    String?
+  totalDebit     Float    @default(0)
+  totalCredit    Float    @default(0)
+  status         JournalStatus @default(DRAFT)
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lines          JournalLine[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, entryNumber])
+  @@index([organizationId])
+  @@index([entryDate])
+}
+
+enum JournalStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+model JournalLine {
+  id             String   @id @default(cuid())
+  journalEntryId String
+  accountId      String
+  description    String?
+  debit          Float    @default(0)
+  credit         Float    @default(0)
+
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  account        ChartOfAccounts @relation(fields: [accountId], references: [id])
+
+  createdAt      DateTime @default(now())
+
+  @@index([journalEntryId])
+  @@index([accountId])
+}
+
+model LedgerEntry {
+  id             String   @id @default(cuid())
+  organizationId String
+  accountId      String
+  journalLineId  String?
+  entryDate      DateTime
+  description    String?
+  debit          Float    @default(0)
+  credit         Float    @default(0)
+  balance        Float    @default(0)
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  account        ChartOfAccounts @relation(fields: [accountId], references: [id])
+
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([accountId])
+  @@index([entryDate])
+}
+
+model TrialBalance {
+  id             String   @id @default(cuid())
+  organizationId String
+  asOfDate       DateTime
+  accountId      String
+  accountCode    String
+  accountName    String
+  debit          Float    @default(0)
+  credit         Float    @default(0)
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime @default(now())
+
+  @@unique([organizationId, asOfDate, accountId])
+  @@index([organizationId])
+  @@index([asOfDate])
 }
 
