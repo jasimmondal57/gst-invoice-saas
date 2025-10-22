@@ -709,6 +709,16 @@ export default function CreateInvoicePage() {
 
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Items</h3>
+            {/* GST Type Indicator */}
+            {formData.items.length > 0 && (
+              <div className="mb-4 p-3 rounded-lg" style={{ backgroundColor: 'rgba(237, 26, 59, 0.1)', borderLeft: '4px solid var(--primary)' }}>
+                <p className="text-sm font-medium" style={{ color: 'var(--primary)' }}>
+                  {formData.items[0]?.gstType === 'IGST'
+                    ? '🌍 INTERSTATE SALE - IGST Applied'
+                    : '🏠 INTRASTATE SALE - SGST + CGST Applied'}
+                </p>
+              </div>
+            )}
             <div className="overflow-x-auto overflow-y-visible">
               <table className="w-full text-sm relative">
                 <thead className="bg-gray-50 border-b border-gray-200">
@@ -718,9 +728,16 @@ export default function CreateInvoicePage() {
                     <th className="px-4 py-2 text-center text-gray-700 font-medium">Unit</th>
                     <th className="px-4 py-2 text-right text-gray-700 font-medium">Rate</th>
                     <th className="px-4 py-2 text-right text-gray-700 font-medium">Discount</th>
-                    <th className="px-4 py-2 text-right text-gray-700 font-medium">Amount</th>
+                    <th className="px-4 py-2 text-right text-gray-700 font-medium">Taxable Value</th>
                     <th className="px-4 py-2 text-right text-gray-700 font-medium">GST %</th>
-                    <th className="px-4 py-2 text-right text-gray-700 font-medium">GST</th>
+                    {formData.items.length > 0 && formData.items[0]?.gstType === 'IGST' ? (
+                      <th className="px-4 py-2 text-right text-gray-700 font-medium">IGST</th>
+                    ) : (
+                      <>
+                        <th className="px-4 py-2 text-right text-gray-700 font-medium">SGST</th>
+                        <th className="px-4 py-2 text-right text-gray-700 font-medium">CGST</th>
+                      </>
+                    )}
                     <th className="px-4 py-2 text-center text-gray-700 font-medium">Action</th>
                   </tr>
                 </thead>
@@ -745,9 +762,16 @@ export default function CreateInvoicePage() {
                       <td className="px-4 py-2"><select value={item.unit} onChange={(e) => handleItemChange(index, 'unit', e.target.value)} className="w-full px-2 py-1 border border-gray-300 rounded text-gray-900 text-sm"><option value="Nos">Nos</option><option value="Kg">Kg</option><option value="Ltr">Ltr</option><option value="Mtr">Mtr</option><option value="Box">Box</option><option value="Pcs">Pcs</option></select></td>
                       <td className="px-4 py-2"><input type="number" value={item.rate} onChange={(e) => handleItemChange(index, 'rate', parseFloat(e.target.value))} className="w-full px-2 py-1 border border-gray-300 rounded text-gray-900 text-right" /></td>
                       <td className="px-4 py-2"><div className="flex gap-1"><input type="number" value={item.discount} onChange={(e) => handleItemChange(index, 'discount', parseFloat(e.target.value))} className="w-16 px-2 py-1 border border-gray-300 rounded text-gray-900 text-right" /><select value={item.discountType} onChange={(e) => handleItemChange(index, 'discountType', e.target.value)} className="px-2 py-1 border border-gray-300 rounded text-gray-900 text-xs"><option value="PERCENTAGE">%</option><option value="FIXED">₹</option></select></div></td>
-                      <td className="px-4 py-2 text-right text-gray-900">₹{item.amount.toFixed(2)}</td>
+                      <td className="px-4 py-2 text-right text-gray-900 font-medium">₹{item.amount.toFixed(2)}</td>
                       <td className="px-4 py-2"><select value={item.gstRate} onChange={(e) => handleItemChange(index, 'gstRate', parseFloat(e.target.value))} className="w-full px-2 py-1 border border-gray-300 rounded text-gray-900"><option>0</option><option>5</option><option>12</option><option>18</option><option>28</option></select></td>
-                      <td className="px-4 py-2 text-right text-gray-900">₹{item.gstAmount.toFixed(2)}</td>
+                      {item.gstType === 'IGST' ? (
+                        <td className="px-4 py-2 text-right text-gray-900 font-medium">₹{item.gstAmount.toFixed(2)}</td>
+                      ) : (
+                        <>
+                          <td className="px-4 py-2 text-right text-gray-900 font-medium">₹{(item.sgstAmount || 0).toFixed(2)}</td>
+                          <td className="px-4 py-2 text-right text-gray-900 font-medium">₹{(item.cgstAmount || 0).toFixed(2)}</td>
+                        </>
+                      )}
                       <td className="px-4 py-2 text-center"><button type="button" onClick={() => removeItem(index)} className="text-red-600 hover:text-red-700 font-medium">Remove</button></td>
                     </tr>
                   ))}
@@ -781,7 +805,26 @@ export default function CreateInvoicePage() {
               <div className="space-y-2">
                 <div className="flex justify-between"><span className="text-gray-700">Subtotal:</span><span className="font-medium text-gray-900">₹{subtotal.toFixed(2)}</span></div>
                 {transactionDiscount > 0 && <div className="flex justify-between text-red-600"><span>Transaction Discount:</span><span>-₹{transactionDiscount.toFixed(2)}</span></div>}
-                <div className="flex justify-between"><span className="text-gray-700">Total GST:</span><span className="font-medium text-gray-900">₹{totalGST.toFixed(2)}</span></div>
+
+                {/* GST Breakdown */}
+                {formData.items.length > 0 && formData.items[0]?.gstType === 'IGST' ? (
+                  <div className="flex justify-between" style={{ color: 'var(--primary)' }}>
+                    <span className="font-medium">IGST (Interstate):</span>
+                    <span className="font-medium">₹{formData.items.reduce((sum, item) => sum + (item.gstAmount || 0), 0).toFixed(2)}</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex justify-between" style={{ color: 'var(--primary)' }}>
+                      <span className="font-medium">SGST (State):</span>
+                      <span className="font-medium">₹{formData.items.reduce((sum, item) => sum + (item.sgstAmount || 0), 0).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between" style={{ color: 'var(--primary)' }}>
+                      <span className="font-medium">CGST (Central):</span>
+                      <span className="font-medium">₹{formData.items.reduce((sum, item) => sum + (item.cgstAmount || 0), 0).toFixed(2)}</span>
+                    </div>
+                  </>
+                )}
+
                 <div className="flex justify-between border-t border-gray-200 pt-2"><span className="text-lg font-semibold text-gray-900">Total:</span><span className="text-lg font-bold text-indigo-600">₹{total.toFixed(2)}</span></div>
               </div>
               <div className="mt-4 p-3 bg-blue-50 rounded-lg">
