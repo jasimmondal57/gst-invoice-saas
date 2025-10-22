@@ -79,6 +79,8 @@ export default function CreateInvoicePage() {
   const [showCustomerSidebar, setShowCustomerSidebar] = useState(false);
   const [customerSearchTerm, setCustomerSearchTerm] = useState('');
   const [showCustomerModal, setShowCustomerModal] = useState(false);
+  const [editingCustomerId, setEditingCustomerId] = useState<string | null>(null);
+  const [showEditCustomerModal, setShowEditCustomerModal] = useState(false);
   const [showProductDropdown, setShowProductDropdown] = useState<{ [key: number]: boolean }>({});
   const [productSearchTerm, setProductSearchTerm] = useState<{ [key: number]: string }>({});
   const [showProductSidebar, setShowProductSidebar] = useState(false);
@@ -96,6 +98,17 @@ export default function CreateInvoicePage() {
     lowStockAlert: '10',
   });
   const [newCustomerForm, setNewCustomerForm] = useState<NewCustomerForm>({
+    name: '',
+    type: 'B2B',
+    gstin: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    pincode: '',
+  });
+  const [editCustomerForm, setEditCustomerForm] = useState<NewCustomerForm>({
     name: '',
     type: 'B2B',
     gstin: '',
@@ -316,6 +329,60 @@ export default function CreateInvoicePage() {
     } catch (error) {
       console.error('Error creating customer:', error);
       alert('Error creating customer');
+    }
+  };
+
+  const handleEditCustomer = async () => {
+    if (!editingCustomerId || !editCustomerForm.name) {
+      alert('Please fill in customer name');
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/v1/customers/${editingCustomerId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...editCustomerForm,
+          organizationId,
+        }),
+      });
+
+      if (response.ok) {
+        const updatedCustomer = await response.json();
+
+        // Update customers list
+        setCustomers(customers.map(c => c.id === editingCustomerId ? updatedCustomer : c));
+
+        // If this customer is currently selected, update form data
+        if (formData.customerName === editCustomerForm.name) {
+          handleCustomerSelect(updatedCustomer);
+        }
+
+        // Reset form and close modal
+        setEditCustomerForm({
+          name: '',
+          type: 'B2B',
+          gstin: '',
+          email: '',
+          phone: '',
+          address: '',
+          city: '',
+          state: '',
+          pincode: '',
+        });
+        setEditingCustomerId(null);
+        setShowEditCustomerModal(false);
+        alert('Customer updated successfully!');
+      } else {
+        alert('Failed to update customer');
+      }
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      alert('Error updating customer');
     }
   };
 
@@ -1188,13 +1255,9 @@ export default function CreateInvoicePage() {
                       c.name.toLowerCase().includes(customerSearchTerm.toLowerCase())
                     )
                     .map((customer) => (
-                      <button
+                      <div
                         key={customer.id}
-                        onClick={() => {
-                          handleCustomerSelect(customer);
-                          setShowCustomerSidebar(false);
-                        }}
-                        className="w-full text-left px-6 py-4 border-b transition-all duration-200 hover:pl-8 transform hover:scale-y-105"
+                        className="w-full px-6 py-4 border-b transition-all duration-200 flex justify-between items-start gap-3 group"
                         style={{
                           borderColor: 'var(--border-gray)',
                           backgroundColor: 'transparent',
@@ -1206,26 +1269,58 @@ export default function CreateInvoicePage() {
                           e.currentTarget.style.backgroundColor = 'transparent';
                         }}
                       >
-                        <div className="flex justify-between items-start gap-3">
-                          <div className="flex-1">
-                            <h3 className="font-semibold" style={{ color: 'var(--text-dark)' }}>
-                              {customer.name}
-                            </h3>
-                            {customer.email && (
-                              <p className="text-xs mt-1" style={{ color: 'var(--text-gray)' }}>
-                                📧 {customer.email}
-                              </p>
-                            )}
-                            <div className="flex gap-3 mt-2 text-xs flex-wrap" style={{ color: 'var(--text-gray)' }}>
-                              <span className={`px-2 py-1 rounded ${customer.type === 'B2B' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
-                                {customer.type}
-                              </span>
-                              {customer.state && <span>📍 {customer.state}</span>}
-                              {customer.phone && <span>📱 {customer.phone}</span>}
-                            </div>
+                        <button
+                          onClick={() => {
+                            handleCustomerSelect(customer);
+                            setShowCustomerSidebar(false);
+                          }}
+                          className="flex-1 text-left"
+                        >
+                          <h3 className="font-semibold" style={{ color: 'var(--text-dark)' }}>
+                            {customer.name}
+                          </h3>
+                          {customer.email && (
+                            <p className="text-xs mt-1" style={{ color: 'var(--text-gray)' }}>
+                              📧 {customer.email}
+                            </p>
+                          )}
+                          <div className="flex gap-3 mt-2 text-xs flex-wrap" style={{ color: 'var(--text-gray)' }}>
+                            <span className={`px-2 py-1 rounded ${customer.type === 'B2B' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+                              {customer.type}
+                            </span>
+                            {customer.state && <span>📍 {customer.state}</span>}
+                            {customer.phone && <span>📱 {customer.phone}</span>}
                           </div>
-                        </div>
-                      </button>
+                        </button>
+
+                        {/* Edit Button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingCustomerId(customer.id);
+                            setEditCustomerForm({
+                              name: customer.name,
+                              type: customer.type,
+                              gstin: customer.gstin || '',
+                              email: customer.email || '',
+                              phone: customer.phone || '',
+                              address: customer.address || '',
+                              city: customer.city || '',
+                              state: customer.state || '',
+                              pincode: customer.pincode || '',
+                            });
+                            setShowEditCustomerModal(true);
+                            setShowCustomerSidebar(false);
+                          }}
+                          className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 opacity-0 group-hover:opacity-100"
+                          style={{
+                            backgroundColor: 'var(--primary)',
+                            color: 'var(--white)',
+                          }}
+                        >
+                          ✏️ Edit
+                        </button>
+                      </div>
                     ))}
                 </div>
               )}
@@ -1389,6 +1484,144 @@ export default function CreateInvoicePage() {
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
               >
                 Create Customer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Customer Modal */}
+      {showEditCustomerModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-96 overflow-y-auto">
+            <div className="sticky top-0 bg-gray-50 border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-gray-900">Edit Customer Address</h2>
+              <button
+                onClick={() => setShowEditCustomerModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+                  <input
+                    type="text"
+                    value={editCustomerForm.name}
+                    onChange={(e) => setEditCustomerForm({ ...editCustomerForm, name: e.target.value })}
+                    placeholder="Enter customer name"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                  <select
+                    value={editCustomerForm.type}
+                    onChange={(e) => setEditCustomerForm({ ...editCustomerForm, type: e.target.value as 'B2B' | 'B2C' })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                  >
+                    <option value="B2B">B2B</option>
+                    <option value="B2C">B2C</option>
+                  </select>
+                </div>
+              </div>
+
+              {editCustomerForm.type === 'B2B' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">GSTIN</label>
+                  <input
+                    type="text"
+                    value={editCustomerForm.gstin}
+                    onChange={(e) => setEditCustomerForm({ ...editCustomerForm, gstin: e.target.value })}
+                    placeholder="Enter GSTIN"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
+                  />
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={editCustomerForm.email}
+                    onChange={(e) => setEditCustomerForm({ ...editCustomerForm, email: e.target.value })}
+                    placeholder="Enter email"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                  <input
+                    type="tel"
+                    value={editCustomerForm.phone}
+                    onChange={(e) => setEditCustomerForm({ ...editCustomerForm, phone: e.target.value })}
+                    placeholder="Enter phone"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                <textarea
+                  value={editCustomerForm.address}
+                  onChange={(e) => setEditCustomerForm({ ...editCustomerForm, address: e.target.value })}
+                  placeholder="Enter address"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
+                  rows={2}
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                  <input
+                    type="text"
+                    value={editCustomerForm.city}
+                    onChange={(e) => setEditCustomerForm({ ...editCustomerForm, city: e.target.value })}
+                    placeholder="Enter city"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+                  <input
+                    type="text"
+                    value={editCustomerForm.state}
+                    onChange={(e) => setEditCustomerForm({ ...editCustomerForm, state: e.target.value })}
+                    placeholder="Enter state"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Pincode</label>
+                  <input
+                    type="text"
+                    value={editCustomerForm.pincode}
+                    onChange={(e) => setEditCustomerForm({ ...editCustomerForm, pincode: e.target.value })}
+                    placeholder="Enter pincode"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end gap-3">
+              <button
+                onClick={() => setShowEditCustomerModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEditCustomer}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
+              >
+                Update Customer
               </button>
             </div>
           </div>
