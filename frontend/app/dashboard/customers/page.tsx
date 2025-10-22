@@ -248,14 +248,24 @@ export default function CustomersPage() {
           {success && <Alert type="success" message={`✓ ${success}`} />}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <FormInput
-                label="Customer Name"
-                placeholder="Enter customer name"
-                value={formData.name}
-                onChange={handleInputChange}
-                error={errors.name}
-                required
-              />
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-dark)' }}>
+                  Customer Name <span style={{ color: 'var(--error)' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Enter customer name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2"
+                  style={{
+                    borderColor: errors.name ? 'var(--error)' : 'var(--border-gray)',
+                    color: 'var(--text-dark)',
+                  }}
+                />
+                {errors.name && <p className="text-xs mt-1" style={{ color: 'var(--error)' }}>{errors.name}</p>}
+              </div>
               <FormSelect
                 label="Customer Type"
                 options={[
@@ -269,33 +279,99 @@ export default function CustomersPage() {
             </div>
 
             {formData.type === 'B2B' && (
-              <FormInput
-                label="GSTIN"
-                placeholder="27AABCT1234H1Z0"
-                value={formData.gstin}
-                onChange={handleInputChange}
-                error={errors.gstin}
-                required
-              />
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-dark)' }}>
+                  GSTIN <span style={{ color: 'var(--error)' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  name="gstin"
+                  placeholder="27AABCT1234H1Z0"
+                  value={formData.gstin}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2"
+                  style={{
+                    borderColor: errors.gstin ? 'var(--error)' : 'var(--border-gray)',
+                    color: 'var(--text-dark)',
+                  }}
+                />
+                {errors.gstin && <p className="text-xs mt-1" style={{ color: 'var(--error)' }}>{errors.gstin}</p>}
+              </div>
             )}
 
             <div className="grid grid-cols-2 gap-4">
-              <FormInput label="Email" placeholder="email@example.com" type="email" value={formData.email} onChange={handleInputChange} />
-              <FormInput label="Phone" placeholder="+91 9876543210" value={formData.phone} onChange={handleInputChange} />
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-dark)' }}>Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="email@example.com"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2"
+                  style={{
+                    borderColor: 'var(--border-gray)',
+                    color: 'var(--text-dark)',
+                  }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-dark)' }}>Phone</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  placeholder="+91 9876543210"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2"
+                  style={{
+                    borderColor: 'var(--border-gray)',
+                    color: 'var(--text-dark)',
+                  }}
+                />
+              </div>
             </div>
 
-            <FormInput label="Address" placeholder="Full address" value={formData.address} onChange={handleInputChange} />
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-dark)' }}>Address</label>
+              <textarea
+                name="address"
+                placeholder="Full address"
+                value={formData.address}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2"
+                style={{
+                  borderColor: 'var(--border-gray)',
+                  color: 'var(--text-dark)',
+                }}
+                rows={2}
+              />
+            </div>
 
             <div className="grid grid-cols-3 gap-4">
-              <FormInput label="City" placeholder="City" value={formData.city} onChange={handleInputChange} />
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-dark)' }}>State *</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-dark)' }}>City</label>
+                <input
+                  type="text"
+                  name="city"
+                  placeholder="City"
+                  value={formData.city}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2"
+                  style={{
+                    borderColor: 'var(--border-gray)',
+                    color: 'var(--text-dark)',
+                  }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-dark)' }}>State *</label>
                 <select
                   name="state"
                   value={formData.state}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border rounded-lg"
-                  style={{ borderColor: 'var(--border-gray)', color: 'var(--text-dark)' }}
+                  className="w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2"
+                  style={{ borderColor: errors.state ? 'var(--error)' : 'var(--border-gray)', color: 'var(--text-dark)', backgroundColor: 'var(--white)' }}
                   required
                 >
                   <option value="">Select State</option>
@@ -305,9 +381,23 @@ export default function CustomersPage() {
                     </option>
                   ))}
                 </select>
-                {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state}</p>}
+                {errors.state && <p className="text-xs mt-1" style={{ color: 'var(--error)' }}>{errors.state}</p>}
               </div>
-              <FormInput label="Pincode" placeholder="Pincode" value={formData.pincode} onChange={handleInputChange} />
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-dark)' }}>Pincode</label>
+                <input
+                  type="text"
+                  name="pincode"
+                  placeholder="Pincode"
+                  value={formData.pincode}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2"
+                  style={{
+                    borderColor: 'var(--border-gray)',
+                    color: 'var(--text-dark)',
+                  }}
+                />
+              </div>
             </div>
 
             <div className="flex gap-3 pt-4 border-t" style={{ borderColor: 'var(--border-gray)' }}>
