@@ -64,6 +64,7 @@ export default function CreateInvoicePage() {
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [showProductDropdown, setShowProductDropdown] = useState<{ [key: number]: boolean }>({});
   const [productSearchTerm, setProductSearchTerm] = useState<{ [key: number]: string }>({});
+  const [showProductSidebar, setShowProductSidebar] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
   const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
   const [newProductForm, setNewProductForm] = useState<NewProductForm>({
@@ -557,58 +558,16 @@ export default function CreateInvoicePage() {
                       <td className="px-4 py-2 relative z-10">
                         <input
                           type="text"
-                          value={productSearchTerm[index] || item.description}
-                          onChange={(e) => {
-                            setProductSearchTerm((prev) => ({ ...prev, [index]: e.target.value }));
-                            setShowProductDropdown((prev) => ({ ...prev, [index]: true }));
+                          value={item.description}
+                          onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                          onFocus={() => {
+                            setSelectedItemIndex(index);
+                            setShowProductSidebar(true);
                           }}
-                          onFocus={() => setShowProductDropdown((prev) => ({ ...prev, [index]: true }))}
-                          placeholder="Search or type product name"
-                          className="w-full px-2 py-1 border border-gray-300 rounded text-gray-900 placeholder-gray-500"
+                          placeholder="Click to select product"
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-gray-900 placeholder-gray-500 cursor-pointer"
+                          readOnly
                         />
-                        {showProductDropdown[index] && (
-                          <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded mt-1 max-h-48 overflow-y-auto z-50 shadow-xl">
-                            {/* Filtered products */}
-                            {products
-                              .filter((p) =>
-                                p.name.toLowerCase().includes((productSearchTerm[index] || '').toLowerCase())
-                              )
-                              .map((p) => (
-                                <button
-                                  key={p.id}
-                                  type="button"
-                                  onClick={() => handleProductSelect(index, p)}
-                                  className="w-full text-left px-3 py-2 hover:bg-blue-50 text-sm text-gray-900 border-b border-gray-100"
-                                >
-                                  <div className="flex justify-between items-center">
-                                    <span className="font-medium">{p.name}</span>
-                                    <span className="text-xs text-gray-500">₹{p.price}</span>
-                                  </div>
-                                </button>
-                              ))}
-
-                            {/* Add Product Option */}
-                            {productSearchTerm[index] && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelectedItemIndex(index);
-                                  setNewProductForm((prev) => ({
-                                    ...prev,
-                                    name: productSearchTerm[index],
-                                  }));
-                                  setShowProductModal(true);
-                                  setShowProductDropdown((prev) => ({ ...prev, [index]: false }));
-                                }}
-                                className="w-full text-left px-3 py-2 hover:bg-green-50 text-sm font-medium text-green-600 border-t-2 border-green-200 bg-green-50"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <span>➕ Add Product: "{productSearchTerm[index]}"</span>
-                                </div>
-                              </button>
-                            )}
-                          </div>
-                        )}
                       </td>
                       <td className="px-4 py-2"><input type="number" value={item.quantity} onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value))} className="w-full px-2 py-1 border border-gray-300 rounded text-gray-900 text-right" /></td>
                       <td className="px-4 py-2"><select value={item.unit} onChange={(e) => handleItemChange(index, 'unit', e.target.value)} className="w-full px-2 py-1 border border-gray-300 rounded text-gray-900 text-sm"><option value="Nos">Nos</option><option value="Kg">Kg</option><option value="Ltr">Ltr</option><option value="Mtr">Mtr</option><option value="Box">Box</option><option value="Pcs">Pcs</option></select></td>
@@ -664,6 +623,113 @@ export default function CreateInvoicePage() {
           </div>
         </form>
       </div>
+
+      {/* Product Sidebar Panel */}
+      {showProductSidebar && (
+        <>
+          {/* Overlay */}
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            onClick={() => setShowProductSidebar(false)}
+          />
+
+          {/* Sidebar */}
+          <div className="fixed right-0 top-0 bottom-0 w-96 bg-white shadow-2xl z-50 flex flex-col">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-6 py-4 flex justify-between items-center">
+              <h2 className="text-xl font-bold">Select Product</h2>
+              <button
+                onClick={() => setShowProductSidebar(false)}
+                className="text-white hover:bg-indigo-700 rounded-full p-1 text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Create Product Button */}
+            <div className="px-6 py-4 border-b border-gray-200">
+              <button
+                onClick={() => {
+                  setSelectedItemIndex(selectedItemIndex);
+                  setNewProductForm({
+                    name: '',
+                    description: '',
+                    hsn: '',
+                    sac: '',
+                    unit: 'Nos',
+                    price: '',
+                    gstRate: '18',
+                    barcode: '',
+                    lowStockAlert: '10',
+                  });
+                  setShowProductModal(true);
+                  setShowProductSidebar(false);
+                }}
+                className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium flex items-center justify-center gap-2"
+              >
+                <span>➕</span> Create New Product
+              </button>
+            </div>
+
+            {/* Search Bar */}
+            <div className="px-6 py-3 border-b border-gray-200">
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={productSearchTerm[selectedItemIndex || 0] || ''}
+                onChange={(e) => setProductSearchTerm((prev) => ({ ...prev, [selectedItemIndex || 0]: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
+              />
+            </div>
+
+            {/* Products List */}
+            <div className="flex-1 overflow-y-auto">
+              {products.length === 0 ? (
+                <div className="p-6 text-center text-gray-500">
+                  <p className="text-sm">No products available</p>
+                  <p className="text-xs mt-2">Create a new product to get started</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-200">
+                  {products
+                    .filter((p) =>
+                      p.name.toLowerCase().includes((productSearchTerm[selectedItemIndex || 0] || '').toLowerCase())
+                    )
+                    .map((product) => (
+                      <button
+                        key={product.id}
+                        onClick={() => {
+                          if (selectedItemIndex !== null) {
+                            handleProductSelect(selectedItemIndex, product);
+                          }
+                          setShowProductSidebar(false);
+                        }}
+                        className="w-full text-left px-6 py-4 hover:bg-indigo-50 transition-colors border-b border-gray-100 last:border-b-0"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-900">{product.name}</h3>
+                            {product.description && (
+                              <p className="text-xs text-gray-500 mt-1">{product.description}</p>
+                            )}
+                            <div className="flex gap-4 mt-2 text-xs text-gray-600">
+                              <span>Unit: {product.unit}</span>
+                              <span>GST: {product.gstRate}%</span>
+                            </div>
+                          </div>
+                          <div className="text-right ml-4">
+                            <p className="font-bold text-indigo-600">₹{product.price.toFixed(2)}</p>
+                            <p className="text-xs text-gray-500 mt-1">Selling Price</p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Product Creation Modal */}
       {showProductModal && (
