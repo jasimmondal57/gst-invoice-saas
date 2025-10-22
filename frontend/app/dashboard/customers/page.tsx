@@ -6,6 +6,47 @@ import Link from 'next/link';
 import { VyapaarPage } from '@/components/VyapaarPageTemplate';
 import { PrimaryButton, SecondaryButton, FormInput, FormSelect, Card, CardHeader, StatusBadge, Alert } from '@/components/VyapaarComponents';
 
+// Indian States List
+const INDIAN_STATES = [
+  'Andaman & Nicobar Islands',
+  'Andhra Pradesh',
+  'Arunachal Pradesh',
+  'Assam',
+  'Bihar',
+  'Chandigarh',
+  'Chhattisgarh',
+  'Dadra & Nagar Haveli',
+  'Daman & Diu',
+  'Delhi',
+  'Goa',
+  'Gujarat',
+  'Haryana',
+  'Himachal Pradesh',
+  'Jammu & Kashmir',
+  'Jharkhand',
+  'Karnataka',
+  'Kerala',
+  'Ladakh',
+  'Lakshadweep',
+  'Madhya Pradesh',
+  'Maharashtra',
+  'Manipur',
+  'Meghalaya',
+  'Mizoram',
+  'Nagaland',
+  'Odisha',
+  'Puducherry',
+  'Punjab',
+  'Rajasthan',
+  'Sikkim',
+  'Tamil Nadu',
+  'Telangana',
+  'Tripura',
+  'Uttar Pradesh',
+  'Uttarakhand',
+  'West Bengal',
+];
+
 interface Customer {
   id: string;
   name: string;
@@ -28,6 +69,7 @@ export default function CustomersPage() {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [success, setSuccess] = useState('');
   const [filterType, setFilterType] = useState('ALL');
+  const [editingCustomerId, setEditingCustomerId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -80,6 +122,7 @@ export default function CustomersPage() {
     const newErrors: { [key: string]: string } = {};
 
     if (!formData.name.trim()) newErrors.name = 'Customer name is required';
+    if (!formData.state) newErrors.state = 'State is required';
     if (formData.type === 'B2B' && !formData.gstin) newErrors.gstin = 'GSTIN is required for B2B customers';
 
     if (Object.keys(newErrors).length > 0) {
@@ -89,8 +132,14 @@ export default function CustomersPage() {
 
     try {
       const orgId = localStorage.getItem('organizationId') || '';
-      const response = await fetch('http://localhost:5000/api/v1/customers', {
-        method: 'POST',
+      const url = editingCustomerId
+        ? `http://localhost:5000/api/v1/customers/${editingCustomerId}`
+        : 'http://localhost:5000/api/v1/customers';
+
+      const method = editingCustomerId ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -99,15 +148,61 @@ export default function CustomersPage() {
       });
 
       if (response.ok) {
-        setSuccess('Customer added successfully!');
+        const message = editingCustomerId ? 'Customer updated successfully!' : 'Customer added successfully!';
+        setSuccess(message);
         setFormData({ name: '', email: '', phone: '', type: 'B2B', gstin: '', address: '', city: '', state: '', pincode: '' });
+        setEditingCustomerId(null);
         setShowForm(false);
         fetchCustomers(token, orgId);
         setTimeout(() => setSuccess(''), 3000);
       }
     } catch (error) {
-      console.error('Failed to add customer:', error);
+      console.error('Failed to save customer:', error);
     }
+  };
+
+  const handleEditCustomer = (customer: Customer) => {
+    setFormData({
+      name: customer.name,
+      email: customer.email || '',
+      phone: customer.phone || '',
+      type: customer.type,
+      gstin: customer.gstin || '',
+      address: customer.address || '',
+      city: customer.city || '',
+      state: customer.state || '',
+      pincode: customer.pincode || '',
+    });
+    setEditingCustomerId(customer.id);
+    setShowForm(true);
+    setErrors({});
+  };
+
+  const handleDeleteCustomer = async (customerId: string) => {
+    if (!confirm('Are you sure you want to delete this customer?')) return;
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/v1/customers/${customerId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        setSuccess('Customer deleted successfully!');
+        const orgId = localStorage.getItem('organizationId') || '';
+        fetchCustomers(token, orgId);
+        setTimeout(() => setSuccess(''), 3000);
+      }
+    } catch (error) {
+      console.error('Failed to delete customer:', error);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCustomerId(null);
+    setFormData({ name: '', email: '', phone: '', type: 'B2B', gstin: '', address: '', city: '', state: '', pincode: '' });
+    setShowForm(false);
+    setErrors({});
   };
 
   const filteredCustomers = filterType === 'ALL' ? customers : customers.filter(c => c.type === filterType);
@@ -143,10 +238,13 @@ export default function CustomersPage() {
         </div>
       }
     >
-      {/* Add Customer Form */}
+      {/* Add/Edit Customer Form */}
       {showForm && (
         <Card className="mb-6">
-          <CardHeader title="Add New Customer" subtitle="Enter customer details" />
+          <CardHeader
+            title={editingCustomerId ? "Edit Customer" : "Add New Customer"}
+            subtitle={editingCustomerId ? "Update customer details" : "Enter customer details"}
+          />
           {success && <Alert type="success" message={`✓ ${success}`} />}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -186,16 +284,37 @@ export default function CustomersPage() {
               <FormInput label="Phone" placeholder="+91 9876543210" value={formData.phone} onChange={handleInputChange} />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormInput label="City" placeholder="City" value={formData.city} onChange={handleInputChange} />
-              <FormInput label="State" placeholder="State" value={formData.state} onChange={handleInputChange} />
-            </div>
-
             <FormInput label="Address" placeholder="Full address" value={formData.address} onChange={handleInputChange} />
 
+            <div className="grid grid-cols-3 gap-4">
+              <FormInput label="City" placeholder="City" value={formData.city} onChange={handleInputChange} />
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-dark)' }}>State *</label>
+                <select
+                  name="state"
+                  value={formData.state}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border rounded-lg"
+                  style={{ borderColor: 'var(--border-gray)', color: 'var(--text-dark)' }}
+                  required
+                >
+                  <option value="">Select State</option>
+                  {INDIAN_STATES.map((state) => (
+                    <option key={state} value={state}>
+                      {state}
+                    </option>
+                  ))}
+                </select>
+                {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state}</p>}
+              </div>
+              <FormInput label="Pincode" placeholder="Pincode" value={formData.pincode} onChange={handleInputChange} />
+            </div>
+
             <div className="flex gap-3 pt-4 border-t" style={{ borderColor: 'var(--border-gray)' }}>
-              <PrimaryButton onClick={handleSubmit}>Save Customer</PrimaryButton>
-              <SecondaryButton onClick={() => setShowForm(false)}>Cancel</SecondaryButton>
+              <PrimaryButton onClick={handleSubmit}>
+                {editingCustomerId ? 'Update Customer' : 'Save Customer'}
+              </PrimaryButton>
+              <SecondaryButton onClick={handleCancelEdit}>Cancel</SecondaryButton>
             </div>
           </form>
         </Card>
@@ -221,6 +340,8 @@ export default function CustomersPage() {
                   <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: 'var(--text-dark)' }}>Email</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: 'var(--text-dark)' }}>Phone</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: 'var(--text-dark)' }}>City</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: 'var(--text-dark)' }}>State</th>
+                  <th className="px-4 py-3 text-center text-sm font-semibold" style={{ color: 'var(--text-dark)' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -231,6 +352,35 @@ export default function CustomersPage() {
                     <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-gray)' }}>{customer.email || '-'}</td>
                     <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-gray)' }}>{customer.phone || '-'}</td>
                     <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-gray)' }}>{customer.city || '-'}</td>
+                    <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-gray)' }}>{customer.state || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-center">
+                      <div className="flex gap-2 justify-center">
+                        <button
+                          onClick={() => handleEditCustomer(customer)}
+                          className="px-3 py-1 rounded text-sm font-medium transition"
+                          style={{
+                            backgroundColor: 'var(--primary)',
+                            color: 'white',
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                          onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCustomer(customer.id)}
+                          className="px-3 py-1 rounded text-sm font-medium transition"
+                          style={{
+                            backgroundColor: '#F44336',
+                            color: 'white',
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                          onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                        >
+                          🗑️ Delete
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
