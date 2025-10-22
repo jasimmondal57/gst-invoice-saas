@@ -41,6 +41,18 @@ interface Product {
   gstRate: number;
 }
 
+interface NewProductForm {
+  name: string;
+  description: string;
+  hsn: string;
+  sac: string;
+  unit: string;
+  price: string;
+  gstRate: string;
+  barcode: string;
+  lowStockAlert: string;
+}
+
 export default function CreateInvoicePage() {
   const router = useRouter();
   const [token, setToken] = useState('');
@@ -51,6 +63,20 @@ export default function CreateInvoicePage() {
   const [success, setSuccess] = useState('');
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [showProductDropdown, setShowProductDropdown] = useState<{ [key: number]: boolean }>({});
+  const [productSearchTerm, setProductSearchTerm] = useState<{ [key: number]: string }>({});
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
+  const [newProductForm, setNewProductForm] = useState<NewProductForm>({
+    name: '',
+    description: '',
+    hsn: '',
+    sac: '',
+    unit: 'Nos',
+    price: '',
+    gstRate: '18',
+    barcode: '',
+    lowStockAlert: '10',
+  });
 
   const [formData, setFormData] = useState({
     invoiceNumber: '',
@@ -198,6 +224,69 @@ export default function CreateInvoicePage() {
     const amountAfterDiscount = baseAmount - discountAmount;
     const gstAmount = calculateGST(amountAfterDiscount, newItems[index].gstRate);
     newItems[index].amount = amountAfterDiscount;
+    newItems[index].gstAmount = gstAmount;
+    setFormData((prev) => ({ ...prev, items: newItems }));
+    setShowProductDropdown((prev) => ({ ...prev, [index]: false }));
+    setProductSearchTerm((prev) => ({ ...prev, [index]: '' }));
+  };
+
+  const handleCreateProduct = async () => {
+    if (!newProductForm.name || !newProductForm.price) {
+      alert('Please fill in product name and price');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:5000/api/v1/products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: newProductForm.name,
+          description: newProductForm.description,
+          hsn: newProductForm.hsn,
+          sac: newProductForm.sac,
+          unit: newProductForm.unit,
+          price: parseFloat(newProductForm.price),
+          gstRate: parseFloat(newProductForm.gstRate),
+          barcode: newProductForm.barcode,
+          lowStockAlert: parseInt(newProductForm.lowStockAlert),
+          organizationId,
+        }),
+      });
+
+      if (response.ok) {
+        const newProduct = await response.json();
+        setProducts([...products, newProduct]);
+
+        // Auto-select the newly created product
+        if (selectedItemIndex !== null) {
+          handleProductSelect(selectedItemIndex, newProduct);
+        }
+
+        // Reset form and close modal
+        setNewProductForm({
+          name: '',
+          description: '',
+          hsn: '',
+          sac: '',
+          unit: 'Nos',
+          price: '',
+          gstRate: '18',
+          barcode: '',
+          lowStockAlert: '10',
+        });
+        setShowProductModal(false);
+      } else {
+        alert('Failed to create product');
+      }
+    } catch (error) {
+      console.error('Error creating product:', error);
+      alert('Error creating product');
+    }
+  };
     newItems[index].gstAmount = gstAmount;
 
     setFormData((prev) => ({ ...prev, items: newItems }));
@@ -473,27 +562,56 @@ export default function CreateInvoicePage() {
                       <td className="px-4 py-2 relative">
                         <input
                           type="text"
-                          value={item.description}
-                          onChange={(e) => { handleItemChange(index, 'description', e.target.value); setShowProductDropdown((prev) => ({ ...prev, [index]: true })); }}
+                          value={productSearchTerm[index] || item.description}
+                          onChange={(e) => {
+                            setProductSearchTerm((prev) => ({ ...prev, [index]: e.target.value }));
+                            setShowProductDropdown((prev) => ({ ...prev, [index]: true }));
+                          }}
                           onFocus={() => setShowProductDropdown((prev) => ({ ...prev, [index]: true }))}
                           placeholder="Search or type product name"
                           className="w-full px-2 py-1 border border-gray-300 rounded text-gray-900 placeholder-gray-500"
                         />
-                        {showProductDropdown[index] && products.length > 0 && (
-                          <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded mt-1 max-h-40 overflow-y-auto z-20">
-                            {products.map((p) => (
+                        {showProductDropdown[index] && (
+                          <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded mt-1 max-h-48 overflow-y-auto z-20 shadow-lg">
+                            {/* Filtered products */}
+                            {products
+                              .filter((p) =>
+                                p.name.toLowerCase().includes((productSearchTerm[index] || '').toLowerCase())
+                              )
+                              .map((p) => (
+                                <button
+                                  key={p.id}
+                                  type="button"
+                                  onClick={() => handleProductSelect(index, p)}
+                                  className="w-full text-left px-3 py-2 hover:bg-blue-50 text-sm text-gray-900 border-b border-gray-100"
+                                >
+                                  <div className="flex justify-between items-center">
+                                    <span className="font-medium">{p.name}</span>
+                                    <span className="text-xs text-gray-500">₹{p.price}</span>
+                                  </div>
+                                </button>
+                              ))}
+
+                            {/* Add Product Option */}
+                            {productSearchTerm[index] && (
                               <button
-                                key={p.id}
                                 type="button"
-                                onClick={() => handleProductSelect(index, p)}
-                                className="w-full text-left px-3 py-2 hover:bg-gray-100 text-sm text-gray-900 border-b border-gray-100"
+                                onClick={() => {
+                                  setSelectedItemIndex(index);
+                                  setNewProductForm((prev) => ({
+                                    ...prev,
+                                    name: productSearchTerm[index],
+                                  }));
+                                  setShowProductModal(true);
+                                  setShowProductDropdown((prev) => ({ ...prev, [index]: false }));
+                                }}
+                                className="w-full text-left px-3 py-2 hover:bg-green-50 text-sm font-medium text-green-600 border-t-2 border-green-200 bg-green-50"
                               >
-                                <div className="flex justify-between items-center">
-                                  <span className="font-medium">{p.name}</span>
-                                  <span className="text-xs text-gray-500">₹{p.price}</span>
+                                <div className="flex items-center gap-2">
+                                  <span>➕ Add Product: "{productSearchTerm[index]}"</span>
                                 </div>
                               </button>
-                            ))}
+                            )}
                           </div>
                         )}
                       </td>
@@ -551,6 +669,153 @@ export default function CreateInvoicePage() {
           </div>
         </form>
       </div>
+
+      {/* Product Creation Modal */}
+      {showProductModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-gray-900">Create New Product</h2>
+              <button
+                onClick={() => setShowProductModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Product Name *</label>
+                  <input
+                    type="text"
+                    value={newProductForm.name}
+                    onChange={(e) => setNewProductForm({ ...newProductForm, name: e.target.value })}
+                    placeholder="e.g., Laptop"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit *</label>
+                  <select
+                    value={newProductForm.unit}
+                    onChange={(e) => setNewProductForm({ ...newProductForm, unit: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                  >
+                    <option value="Nos">Nos</option>
+                    <option value="Kg">Kg</option>
+                    <option value="Ltr">Ltr</option>
+                    <option value="Mtr">Mtr</option>
+                    <option value="Box">Box</option>
+                    <option value="Pcs">Pcs</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  value={newProductForm.description}
+                  onChange={(e) => setNewProductForm({ ...newProductForm, description: e.target.value })}
+                  placeholder="Product description"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
+                  rows={2}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">HSN Code</label>
+                  <input
+                    type="text"
+                    value={newProductForm.hsn}
+                    onChange={(e) => setNewProductForm({ ...newProductForm, hsn: e.target.value })}
+                    placeholder="e.g., 8471"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">SAC Code</label>
+                  <input
+                    type="text"
+                    value={newProductForm.sac}
+                    onChange={(e) => setNewProductForm({ ...newProductForm, sac: e.target.value })}
+                    placeholder="e.g., 9983"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Selling Price (₹) *</label>
+                  <input
+                    type="number"
+                    value={newProductForm.price}
+                    onChange={(e) => setNewProductForm({ ...newProductForm, price: e.target.value })}
+                    placeholder="0.00"
+                    step="0.01"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">GST Rate (%)</label>
+                  <select
+                    value={newProductForm.gstRate}
+                    onChange={(e) => setNewProductForm({ ...newProductForm, gstRate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                  >
+                    <option value="0">0%</option>
+                    <option value="5">5%</option>
+                    <option value="12">12%</option>
+                    <option value="18">18%</option>
+                    <option value="28">28%</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Barcode</label>
+                  <input
+                    type="text"
+                    value={newProductForm.barcode}
+                    onChange={(e) => setNewProductForm({ ...newProductForm, barcode: e.target.value })}
+                    placeholder="e.g., 8901234567890"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Low Stock Alert (Qty)</label>
+                  <input
+                    type="number"
+                    value={newProductForm.lowStockAlert}
+                    onChange={(e) => setNewProductForm({ ...newProductForm, lowStockAlert: e.target.value })}
+                    placeholder="10"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end gap-3">
+              <button
+                onClick={() => setShowProductModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateProduct}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
+              >
+                Create Product
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
