@@ -50,6 +50,15 @@ app.use('/api/v1/multi-user', require('./routes/multiUserManagement'));
 // Advanced Features: Reports
 app.use('/api/v1/advanced-reports', require('./routes/advancedReports'));
 
+// Integration Features: Payment Gateway, Email, SMS
+app.use('/api/v1/payment-gateway', require('./routes/paymentGateway'));
+app.use('/api/v1/email', require('./routes/emailIntegration'));
+app.use('/api/v1/sms', require('./routes/smsIntegration'));
+
+// Swagger API Documentation
+const { swaggerUi, specs } = require('./swagger');
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
