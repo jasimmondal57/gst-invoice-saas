@@ -204,7 +204,13 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // Update invoice
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
+    console.log('🔄 UPDATE INVOICE REQUEST');
+    console.log('Invoice ID:', req.params.id);
+    console.log('Request body:', req.body);
+
     const { invoiceDate, dueDate, status, items, customerId, subtotal, taxAmount, totalAmount, notes } = req.body;
+
+    console.log('Extracted fields:', { customerId, invoiceDate, dueDate, status, itemsCount: items?.length, subtotal, taxAmount, totalAmount, notes });
 
     // Build update data - only include fields that should be updated
     const updateData = {};
@@ -242,6 +248,8 @@ router.put('/:id', authMiddleware, async (req, res) => {
       updateData.notes = notes;
     }
 
+    console.log('📝 Update data to be applied:', updateData);
+
     // Update invoice
     const invoice = await prisma.invoice.update({
       where: { id: req.params.id },
@@ -251,6 +259,9 @@ router.put('/:id', authMiddleware, async (req, res) => {
         items: true
       }
     });
+
+    console.log('✅ Invoice updated successfully');
+    console.log('Updated invoice customer:', invoice.customer);
 
     // If items are provided, update them
     if (items && Array.isArray(items)) {

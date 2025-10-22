@@ -258,6 +258,20 @@ export default function EditInvoicePage() {
     setSaving(true);
     const { subtotal, taxAmount, totalAmount } = calculateTotals();
 
+    const updatePayload = {
+      customerId: formData.customerId,
+      invoiceDate: formData.invoiceDate,
+      dueDate: formData.dueDate || null,
+      status: formData.status,
+      items: formData.items,
+      subtotal,
+      taxAmount,
+      totalAmount,
+      notes: formData.notes,
+    };
+
+    console.log('📤 Sending update payload:', updatePayload);
+
     try {
       const response = await fetch(`http://localhost:5000/api/v1/invoices/${invoiceId}`, {
         method: 'PUT',
@@ -265,25 +279,18 @@ export default function EditInvoicePage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          customerId: formData.customerId,
-          invoiceDate: formData.invoiceDate,
-          dueDate: formData.dueDate || null,
-          status: formData.status,
-          items: formData.items,
-          subtotal,
-          taxAmount,
-          totalAmount,
-          notes: formData.notes,
-        }),
+        body: JSON.stringify(updatePayload),
       });
+
+      console.log('📥 Response status:', response.status);
+      const responseData = await response.json();
+      console.log('📥 Response data:', responseData);
 
       if (response.ok) {
         alert('Invoice updated successfully!');
         router.push(`/dashboard/invoices/${invoiceId}`);
       } else {
-        const error = await response.json();
-        alert('Failed to update invoice: ' + (error.error || 'Unknown error'));
+        alert('Failed to update invoice: ' + (responseData.error || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error updating invoice:', error);
