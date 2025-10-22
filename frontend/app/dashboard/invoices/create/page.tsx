@@ -878,6 +878,31 @@ export default function CreateInvoicePage() {
               </div>
             </div>
           </div>
+
+          {/* Submit Button Section */}
+          <div className="mt-8 flex gap-4 justify-end">
+            <button
+              type="button"
+              onClick={() => router.push('/dashboard/invoices')}
+              className="px-6 py-3 border-2 rounded-lg font-semibold transition-all duration-200 hover:shadow-md"
+              style={{
+                borderColor: 'var(--border-gray)',
+                color: 'var(--text-dark)',
+                backgroundColor: 'var(--white)',
+              }}
+            >
+              ✕ Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-8 py-3 rounded-lg font-semibold text-white transition-all duration-200 hover:shadow-lg transform hover:scale-105"
+              style={{
+                backgroundColor: 'var(--primary)',
+              }}
+            >
+              ✓ Create Invoice
+            </button>
+          </div>
         </form>
       </div>
 
