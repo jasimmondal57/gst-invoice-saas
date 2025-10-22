@@ -199,12 +199,14 @@ export default function DashboardLayout({
                             <Link
                               key={item.href}
                               href={item.href}
-                              className={`flex items-center gap-3 px-4 py-2 rounded-lg transition font-medium text-sm ${
-                                isActive
-                                  ? 'text-white'
-                                  : 'text-gray-200 hover:text-white hover:bg-gray-700'
-                              }`}
-                              style={isActive ? { backgroundColor: 'var(--primary)', borderLeft: '4px solid var(--primary)' } : { color: '#E0E0E0' }}
+                              className="flex items-center gap-3 px-4 py-2 rounded-lg transition font-medium text-sm"
+                              style={isActive ? {
+                                backgroundColor: 'var(--primary)',
+                                color: '#FFFFFF',
+                                borderLeft: '4px solid #FFFFFF'
+                              } : {
+                                color: '#E0E0E0'
+                              }}
                             >
                               <span className="text-lg">{item.icon}</span>
                               <span>{item.label}</span>
