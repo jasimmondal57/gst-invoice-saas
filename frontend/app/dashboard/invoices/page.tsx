@@ -154,9 +154,14 @@ export default function InvoicesPage() {
                         <StatusBadge status={invoice.status} />
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <Link href={`/dashboard/invoices/${invoice.id}`}>
-                          <button className="font-medium transition hover:opacity-80" style={{ color: 'var(--primary)' }}>View</button>
-                        </Link>
+                        <div className="flex gap-3">
+                          <Link href={`/dashboard/invoices/${invoice.id}`}>
+                            <button className="font-medium transition hover:opacity-80" style={{ color: 'var(--primary)' }}>View</button>
+                          </Link>
+                          <Link href={`/dashboard/invoices/${invoice.id}/edit`}>
+                            <button className="font-medium transition hover:opacity-80" style={{ color: 'var(--primary)' }}>Edit</button>
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}
