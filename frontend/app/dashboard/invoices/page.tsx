@@ -93,8 +93,9 @@ export default function InvoicesPage() {
               style={{
                 backgroundColor: filterStatus === status ? 'var(--primary)' : 'var(--white)',
                 color: filterStatus === status ? 'white' : 'var(--text-gray)',
+                borderWidth: '1px',
+                borderStyle: 'solid',
                 borderColor: filterStatus === status ? 'var(--primary)' : 'var(--border-gray)',
-                border: '1px solid',
               }}
             >
               {status}

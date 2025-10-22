@@ -130,8 +130,9 @@ export default function CustomersPage() {
               style={{
                 backgroundColor: filterType === type ? 'var(--primary)' : 'var(--white)',
                 color: filterType === type ? 'white' : 'var(--text-gray)',
+                borderWidth: '1px',
+                borderStyle: 'solid',
                 borderColor: filterType === type ? 'var(--primary)' : 'var(--border-gray)',
-                border: '1px solid',
               }}
             >
               {type}
